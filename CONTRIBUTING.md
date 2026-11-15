@@ -10,7 +10,7 @@
 
 1. Haz un fork y crea una rama.
 2. Mantén el estilo: puntos breves y accionables, con referencia a un estándar (OWASP, NIST, CIS) cuando aplique.
-3. Ejecuta `python3 scripts/check_secrets.py` para verificar que no incluyes secretos ni IPs.
+3. Ejecuta `python3 -m unittest discover -s tests` y `python3 scripts/check_secrets.py`.
 4. Abre un Pull Request describiendo el cambio.
 
 **Importante:** no incluyas datos reales de ningún sistema (IPs, credenciales, nombres internos).

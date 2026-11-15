@@ -1,0 +1,13 @@
+# Copia a .pre-commit-config.yaml en tu proyecto; luego: pip install pre-commit && pre-commit install
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.4
+    hooks:
+      - id: gitleaks
+  - repo: local
+    hooks:
+      - id: appsec-scan
+        name: appsec-scan
+        entry: appsec-scan --fail-on high
+        language: system
+        pass_filenames: true

@@ -1,0 +1,45 @@
+# Copia este archivo a .github/workflows/security.yml en TU proyecto.
+name: Security
+on:
+  push: { branches: [main] }
+  pull_request:
+  schedule: [{ cron: "0 6 * * 1" }]
+permissions:
+  contents: read
+  security-events: write
+jobs:
+  codeql:                       # SAST
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with: { languages: javascript-typescript, python }   # ajusta a tus lenguajes
+      - uses: github/codeql-action/analyze@v3
+  secrets:                      # escaneo de secretos
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: gitleaks/gitleaks-action@v2
+        env: { GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
+  dependencies:                 # SCA en PRs
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/dependency-review-action@v4
+  appsec-scan:                  # este analizador
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install git+https://github.com/EdissonGT/OWASP-Threat-Dragon-AdminWeb.git
+      - run: appsec-scan . --format sarif --fail-on high > appsec.sarif || true
+      - uses: github/codeql-action/upload-sarif@v3
+        with: { sarif_file: appsec.sarif }
+      - run: appsec-scan . --fail-on high
+  container:                    # imágenes (si usas Docker)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aquasecurity/trivy-action@0.24.0
+        with: { scan-type: fs, severity: "HIGH,CRITICAL", exit-code: "1" }

@@ -6,7 +6,7 @@ IP = re.compile(r"\b(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\
 KEY = re.compile(r"BEGIN [A-Z ]*PRIVATE KEY|AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{30,}")
 errors = 0
 for p in pathlib.Path(".").rglob("*"):
-    if not p.is_file() or ".git" in p.parts or p.suffix in {".png", ".jpg"}:
+    if not p.is_file() or ".git" in p.parts or "__pycache__" in p.parts or p.suffix in {".png", ".jpg", ".pyc"}:
         continue
     text = p.read_text(encoding="utf-8", errors="ignore")
     if KEY.search(text):
