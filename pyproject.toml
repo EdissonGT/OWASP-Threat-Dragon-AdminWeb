@@ -19,7 +19,7 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/EdissonGT/OWASP-Threat-Dragon-AdminWeb"
+Homepage = "https://github.com/EdissonGT/repocheckup"
 
 [project.scripts]
 repocheckup = "repocheckup.__main__:main"

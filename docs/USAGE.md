@@ -14,8 +14,8 @@ It needs only Python 3.8+ and has no dependencies.
 ## Install and run
 
 ```bash
-git clone https://github.com/EdissonGT/OWASP-Threat-Dragon-AdminWeb.git
-cd OWASP-Threat-Dragon-AdminWeb
+git clone https://github.com/EdissonGT/repocheckup.git
+cd repocheckup
 python3 -m repocheckup /path/to/your/project          # run without installing
 pip install . && repocheckup /path/to/your/project    # or install the command
 ```
@@ -52,7 +52,7 @@ GitHub Actions:
 
 ```yaml
 - uses: actions/checkout@v4
-- uses: EdissonGT/OWASP-Threat-Dragon-AdminWeb@main
+- uses: EdissonGT/repocheckup@main
   with:
     fail-on: high
     min-score: "70"

@@ -63,7 +63,7 @@ def to_sarif(findings):
     return json.dumps({
         "version": "2.1.0", "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
         "runs": [{"tool": {"driver": {"name": "repocheckup", "version": __version__,
-                                      "informationUri": "https://github.com/EdissonGT/OWASP-Threat-Dragon-AdminWeb",
+                                      "informationUri": "https://github.com/EdissonGT/repocheckup",
                                       "rules": list(rules.values())}},
                   "results": [{"ruleId": f.rule, "level": level[f.severity],
                                "message": {"text": f"{f.title}. {f.advice}"},

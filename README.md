@@ -1,6 +1,6 @@
 # repocheckup
 
-[![CI](https://github.com/EdissonGT/OWASP-Threat-Dragon-AdminWeb/actions/workflows/validate.yml/badge.svg)](https://github.com/EdissonGT/OWASP-Threat-Dragon-AdminWeb/actions/workflows/validate.yml)
+[![CI](https://github.com/EdissonGT/repocheckup/actions/workflows/validate.yml/badge.svg)](https://github.com/EdissonGT/repocheckup/actions/workflows/validate.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 **A health checkup for any code repository.** One command reviews security, code quality, repository health and dependencies, gives the project a score from 0 to 100 and tells you how to fix each finding.
@@ -12,8 +12,8 @@ No dependencies. Only Python 3.8+. Works offline. Messages in English and Spanis
 ## Quick start
 
 ```bash
-git clone https://github.com/EdissonGT/OWASP-Threat-Dragon-AdminWeb.git
-cd OWASP-Threat-Dragon-AdminWeb
+git clone https://github.com/EdissonGT/repocheckup.git
+cd repocheckup
 python3 -m repocheckup /path/to/your/project --html report.html
 ```
 
@@ -47,7 +47,7 @@ Output as text, JSON, SARIF (GitHub Code Scanning) or a self-contained HTML repo
 
 ```yaml
 - uses: actions/checkout@v4
-- uses: EdissonGT/OWASP-Threat-Dragon-AdminWeb@main
+- uses: EdissonGT/repocheckup@main
   with:
     fail-on: high      # low | medium | high | critical | never
     min-score: "70"    # optional quality gate

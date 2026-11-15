@@ -9,8 +9,8 @@ Sin dependencias. Solo Python 3.8+. Funciona sin conexión. Mensajes en español
 ## Inicio rápido
 
 ```bash
-git clone https://github.com/EdissonGT/OWASP-Threat-Dragon-AdminWeb.git
-cd OWASP-Threat-Dragon-AdminWeb
+git clone https://github.com/EdissonGT/repocheckup.git
+cd repocheckup
 python3 -m repocheckup /ruta/a/tu/proyecto --lang es --html reporte.html
 ```
 
@@ -44,7 +44,7 @@ Salida en texto, JSON, SARIF (GitHub Code Scanning) o un informe HTML autónomo.
 
 ```yaml
 - uses: actions/checkout@v4
-- uses: EdissonGT/OWASP-Threat-Dragon-AdminWeb@main
+- uses: EdissonGT/repocheckup@main
   with:
     fail-on: high
     min-score: "70"

@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: EdissonGT/OWASP-Threat-Dragon-AdminWeb@main
+      - uses: EdissonGT/repocheckup@main
         with:
           fail-on: high          # low | medium | high | critical | never
           min-score: "0"         # e.g. "70" to require a minimum score

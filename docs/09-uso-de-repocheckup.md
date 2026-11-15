@@ -14,8 +14,8 @@ Solo necesita Python 3.8 o superior, sin dependencias.
 ## Instalar y ejecutar
 
 ```bash
-git clone https://github.com/EdissonGT/OWASP-Threat-Dragon-AdminWeb.git
-cd OWASP-Threat-Dragon-AdminWeb
+git clone https://github.com/EdissonGT/repocheckup.git
+cd repocheckup
 python3 -m repocheckup /ruta/a/tu/proyecto --lang es          # sin instalar
 pip install . && repocheckup /ruta/a/tu/proyecto --lang es    # o instalando el comando
 ```
@@ -50,7 +50,7 @@ Cada área empieza en 100 y pierde puntos por hallazgo: crítico 25, alto 10, me
 
 ```yaml
 - uses: actions/checkout@v4
-- uses: EdissonGT/OWASP-Threat-Dragon-AdminWeb@main
+- uses: EdissonGT/repocheckup@main
   with:
     fail-on: high
     min-score: "70"
