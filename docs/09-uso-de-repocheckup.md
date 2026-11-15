@@ -42,6 +42,39 @@ python3 -m repocheckup samples/vulnerable-app --lang es --html reporte.html
 
 Para silenciar un falso positivo en una línea, agrega el comentario `repocheckup-ignore`.
 
+## Recomendaciones de IA (`--ai`)
+
+Las reglas dicen *qué* está mal. Con `--ai`, Claude lee los hallazgos junto con el código que los rodea y te dice *qué hacer*:
+
+- una evaluación breve del repositorio,
+- un plan priorizado que agrupa los hallazgos que comparten una misma corrección, con el riesgo de dejar cada uno como está,
+- el código corregido de las líneas señaladas,
+- qué hallazgos parecen falsos positivos,
+- mejoras rápidas que toman minutos.
+
+```bash
+pip install "repocheckup[ai]"
+export ANTHROPIC_API_KEY=...            # desde console.anthropic.com
+repocheckup /ruta/a/tu/proyecto --ai --lang es --html reporte.html
+```
+
+Las recomendaciones salen en la terminal, en el informe HTML y en la clave `ai` de la salida JSON.
+
+| Opción | Descripción |
+|---|---|
+| `--ai` | Activa las recomendaciones de IA. |
+| `--ai-model MODELO` | Modelo a usar (por defecto `claude-opus-5-5`; también `REPOCHECKUP_AI_MODEL`). |
+| `--ai-effort low\|medium\|high\|xhigh\|max` | Cuánto razona el modelo. Más alto cuesta más (por defecto `medium`). |
+| `--ai-max-findings N` | Cuántos hallazgos, los más graves primero, se envían (por defecto 40). |
+
+Antes de activarla:
+
+- **Tu código sale de tu máquina.** Se envían a la API de Anthropic los hallazgos y unas doce líneas de código alrededor de cada uno. Sin `--ai` no se envía nada.
+- **Tiene costo.** Cada ejecución se cobra a tu API key; al terminar se muestra cuántos tokens usó.
+- **Requiere Python 3.10 o superior** (lo exige el SDK de Anthropic). El resto de la herramienta sigue funcionando en 3.8.
+- **Revisa lo que sugiere.** Es un modelo leyendo fragmentos, no tu proyecto completo; toma sus correcciones como una propuesta.
+- Si la API no responde o falta la key, el informe normal se genera igual.
+
 ## Puntaje
 
 Cada área empieza en 100 y pierde puntos por hallazgo: crítico 25, alto 10, medio 4, bajo 1. El puntaje general es el promedio de las áreas ejecutadas. Notas: A ≥ 90, B ≥ 75, C ≥ 60, D ≥ 40, F por debajo.

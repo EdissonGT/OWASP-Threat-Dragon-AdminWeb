@@ -2,7 +2,7 @@
 
 **Un chequeo de salud para cualquier repositorio de código.** Un solo comando revisa seguridad, calidad de código, salud del repositorio y dependencias, le da al proyecto un puntaje de 0 a 100 y te dice cómo corregir cada hallazgo.
 
-Sin dependencias. Solo Python 3.8+. Funciona sin conexión. Mensajes en español e inglés.
+Sin dependencias. Solo Python 3.8+. Funciona sin conexión. Mensajes en español e inglés. Recomendaciones de IA opcionales que te escriben la corrección.
 
 🇬🇧 [Read in English](README.md)
 
@@ -28,6 +28,17 @@ Resumen: 11 archivos analizados, 49 hallazgos
 ```
 
 ¿Quieres verlo funcionar primero? Ejecútalo sobre el proyecto de práctica, roto a propósito, en [`samples/vulnerable-app`](samples/vulnerable-app).
+
+## Recomendaciones de IA (opcional)
+
+Agrega `--ai` y Claude lee los hallazgos con el código que los rodea. Devuelve un plan priorizado, el código corregido de cada problema y los hallazgos que parecen falsos positivos.
+
+```bash
+pip install "repocheckup[ai]" && export ANTHROPIC_API_KEY=...
+repocheckup /ruta/a/tu/proyecto --ai --lang es --html reporte.html
+```
+
+Está apagada por defecto. Al activarla, los hallazgos y unas líneas de código alrededor de cada uno se envían a la API de Anthropic y se cobran a tu key. Detalle en la [guía de uso](docs/09-uso-de-repocheckup.md).
 
 ## Qué revisa
 

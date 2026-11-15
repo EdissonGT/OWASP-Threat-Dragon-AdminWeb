@@ -4,7 +4,7 @@ import os
 import sys
 from pathlib import Path
 
-from . import __version__, report
+from . import __version__, ai, report
 from .model import CATEGORIES, SEVERITY_ORDER
 from .scanner import scan
 
@@ -41,8 +41,45 @@ def build_parser():
     ap.add_argument("--min-score", type=int, default=0, help="exit 1 if the overall score is below this value")
     ap.add_argument("--exclude", action="append", default=[], help="folder name to exclude (repeatable)")
     ap.add_argument("--lang", choices=["en", "es"], default=default_lang(), help="language of the messages")
+    ap.add_argument("--ai", action="store_true",
+                    help="ask Claude for a prioritized plan and concrete fixes (sends findings and nearby code "
+                         "to the Anthropic API; needs repocheckup[ai] and ANTHROPIC_API_KEY)")
+    ap.add_argument("--ai-model", default=os.environ.get("REPOCHECKUP_AI_MODEL", ai.DEFAULT_MODEL),
+                    help=f"model for --ai (default: {ai.DEFAULT_MODEL})")
+    ap.add_argument("--ai-effort", choices=["low", "medium", "high", "xhigh", "max"], default="medium",
+                    help="how hard the model thinks; higher costs more (default: medium)")
+    ap.add_argument("--ai-max-findings", type=int, default=40,
+                    help="how many findings, most severe first, are sent to the model (default: 40)")
     ap.add_argument("--version", action="version", version=__version__)
     return ap
+
+
+def _advice(args, findings, checks):
+    if not args.ai:
+        return None
+    advice, notes = ai.advise(findings, checks, args.lang, args.ai_model, args.ai_effort, args.ai_max_findings)
+    for note in notes:
+        print(f"repocheckup: {note}", file=sys.stderr)
+    return advice
+
+
+def _render(args, findings, checks, files, advice):
+    if args.format == "json":
+        return report.to_json(findings, checks, files, advice)
+    if args.format == "sarif":
+        return report.to_sarif(findings)
+    out = report.to_text(findings, checks, files, args.lang, color=sys.stdout.isatty() and not args.output)
+    return out + "\n" + report.ai_to_text(advice, args.lang) if advice else out
+
+
+def _write(args, out, html_page):
+    if args.output:
+        Path(args.output).write_text(out + "\n", encoding="utf-8")
+    else:
+        print(out)
+    if args.html:
+        Path(args.html).write_text(html_page, encoding="utf-8")
+        print(f"repocheckup: HTML report written to {args.html}", file=sys.stderr)
 
 
 def main(argv=None):
@@ -57,20 +94,10 @@ def main(argv=None):
     findings, warnings, files = scan(args.paths, checks, args.exclude, args.lang)
     for w in warnings:
         print(f"repocheckup: warning: {w}", file=sys.stderr)
-    if args.format == "json":
-        out = report.to_json(findings, checks, files)
-    elif args.format == "sarif":
-        out = report.to_sarif(findings)
-    else:
-        out = report.to_text(findings, checks, files, args.lang, color=sys.stdout.isatty() and not args.output)
-    if args.output:
-        Path(args.output).write_text(out + "\n", encoding="utf-8")
-    else:
-        print(out)
-    if args.html:
-        Path(args.html).write_text(report.to_html(findings, checks, files, args.lang, ", ".join(args.paths)),
-                                   encoding="utf-8")
-        print(f"repocheckup: HTML report written to {args.html}", file=sys.stderr)
+    advice = _advice(args, findings, checks)
+    html_page = (report.to_html(findings, checks, files, args.lang, ", ".join(args.paths), advice)
+                 if args.html else "")
+    _write(args, _render(args, findings, checks, files, advice), html_page)
     _, overall = report.scores(findings, checks)
     threshold = SEVERITY_ORDER.get(args.fail_on, 99)
     failed = any(SEVERITY_ORDER[f.severity] >= threshold for f in findings) or overall < args.min_score

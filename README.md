@@ -5,7 +5,7 @@
 
 **A health checkup for any code repository.** One command reviews security, code quality, repository health and dependencies, gives the project a score from 0 to 100 and tells you how to fix each finding.
 
-No dependencies. Only Python 3.8+. Works offline. Messages in English and Spanish.
+No dependencies. Only Python 3.8+. Works offline. Messages in English and Spanish. Optional AI recommendations that write the fix for you.
 
 🇪🇸 [Leer en español](README.es.md)
 
@@ -31,6 +31,17 @@ Summary: 11 files analyzed, 49 findings
 ```
 
 Want to see it work first? Run it on the deliberately broken practice project in [`samples/vulnerable-app`](samples/vulnerable-app).
+
+## AI recommendations (optional)
+
+Add `--ai` and Claude reads the findings with the code around them, then returns a prioritized plan, the corrected code for each problem and the findings that look like false positives.
+
+```bash
+pip install "repocheckup[ai]" && export ANTHROPIC_API_KEY=...
+repocheckup /path/to/your/project --ai --html report.html
+```
+
+It is off by default. When on, the findings and a few lines of code around each are sent to the Anthropic API and billed to your key. Details: [docs/USAGE.md](docs/USAGE.md#ai-recommendations---ai).
 
 ## What it checks
 

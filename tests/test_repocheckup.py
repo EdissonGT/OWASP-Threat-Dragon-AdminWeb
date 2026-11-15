@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from repocheckup import deps, health, quality, report, security  # noqa: E402
+from repocheckup import ai, deps, health, quality, report, security  # noqa: E402
 from repocheckup.scanner import scan  # noqa: E402
 
 SAMPLES = ROOT / "samples" / "vulnerable-app"
@@ -155,6 +155,125 @@ class ReportTests(unittest.TestCase):
     def test_spanish_messages(self):
         found = security.check_file(Path("a.py"), "h = hashlib.m" + "d5(x)\n", "es")
         self.assertIn("Hash débil", found[0].title)
+
+
+ADVICE = {
+    "summary": "Risky <b>repo</b>.",
+    "priorities": [{"title": "Fix SQL injection", "why": "Data theft", "steps": ["Use parameters"],
+                    "rules": ["INJ001"], "effort": "small"}],
+    "fixes": [{"rule": "INJ001", "file": "app.py", "line": 13, "explanation": "Parameterize it",
+               "fixed_code": 'cur.execute("SELECT 1 WHERE a = %s", (a,))', "false_positive": False},
+              {"rule": "CFG005", "file": "x.py", "line": 2, "explanation": "Test URL", "fixed_code": "",
+               "false_positive": True}],
+    "quick_wins": ["Add a .gitignore"],
+}
+
+
+class Obj:
+    def __init__(self, **kw):
+        self.__dict__.update(kw)
+
+
+class FakeClient:
+    """Mimics client.beta.messages.stream(...) as a context manager with get_final_message()."""
+
+    def __init__(self, text=None, stop_reason="end_turn", error=None):
+        self.text = json.dumps(ADVICE) if text is None else text
+        self.stop_reason, self.error, self.calls = stop_reason, error, []
+        self.beta = Obj(messages=Obj(stream=self.stream))
+
+    def stream(self, **kwargs):
+        self.calls.append(kwargs)
+        if self.error:
+            raise self.error
+        message = Obj(stop_reason=self.stop_reason, content=[Obj(type="thinking"), Obj(type="text", text=self.text)],
+                      usage=Obj(input_tokens=10, output_tokens=5), model="fake-model")
+        outer = self
+
+        class Ctx:
+            def __enter__(self):
+                return Obj(get_final_message=lambda: message)
+
+            def __exit__(self, *a):
+                return False
+        return Ctx()
+
+
+class AiTests(unittest.TestCase):
+    def setUp(self):
+        self.findings = scan([SAMPLES])[0]
+        self.checks = ["security", "quality", "health"]
+
+    def test_request_shape_and_result(self):
+        client = FakeClient()
+        advice, notes = ai.advise(self.findings, self.checks, "es", max_findings=5, client=client)
+        self.assertEqual(advice, ADVICE)
+        call = client.calls[0]
+        self.assertEqual(call["model"], "claude-opus-5-5")
+        self.assertEqual(call["output_config"]["format"]["type"], "json_schema")
+        self.assertEqual(call["output_config"]["effort"], "medium")
+        self.assertEqual(call["fallbacks"], "default")
+        self.assertNotIn("thinking", call)
+        self.assertNotIn("temperature", call)
+        self.assertIn("Spanish", call["messages"][0]["content"])
+        self.assertTrue(any("5 most severe of" in n for n in notes))
+        self.assertTrue(any("10 input and 5 output" in n for n in notes))
+
+    def test_payload_sends_most_severe_with_code_context(self):
+        payload, sent = ai.build_payload(self.findings, self.checks, 5)
+        self.assertEqual(sent, 5)
+        self.assertEqual(payload["total_findings"], len(self.findings))
+        self.assertEqual(sum(payload["findings_not_shown_by_rule"].values()), len(self.findings) - 5)
+        self.assertTrue(all(f["severity"] in ("high", "critical") for f in payload["findings"]))
+        with_code = [f for f in payload["findings"] if f["code"]]
+        self.assertTrue(with_code)
+        self.assertRegex(with_code[0]["code"], r"^\d+: ")
+
+    def test_failures_become_notes(self):
+        cases = [(FakeClient(stop_reason="refusal"), "declined"), (FakeClient(stop_reason="max_tokens"), "cut off"),
+                 (FakeClient(text="not json"), "not valid JSON"), (FakeClient(text="{}"), "expected fields"),
+                 (FakeClient(error=OSError("no network")), "no network")]
+        for client, expected in cases:
+            advice, notes = ai.advise(self.findings, self.checks, client=client)
+            self.assertIsNone(advice)
+            self.assertTrue(any(expected in n for n in notes), notes)
+
+    def test_no_findings_makes_no_call(self):
+        client = FakeClient()
+        self.assertEqual(ai.advise([], self.checks, client=client)[0], None)
+        self.assertEqual(client.calls, [])
+
+    def test_schema_is_strict(self):
+        def check(node):
+            if node.get("type") == "object":
+                self.assertIs(node["additionalProperties"], False)
+                self.assertEqual(sorted(node["required"]), sorted(node["properties"]))
+                for child in node["properties"].values():
+                    check(child)
+            elif node.get("type") == "array":
+                check(node["items"])
+        check(ai.SCHEMA)
+
+    def test_rendering_escapes_ai_text(self):
+        page = report.to_html(self.findings, self.checks, 1, "en", "t", ADVICE)
+        self.assertIn("AI recommendations", page)
+        self.assertIn("Risky &lt;b&gt;repo&lt;/b&gt;.", page)
+        self.assertNotIn("Risky <b>repo</b>", page)
+        text = report.ai_to_text(ADVICE, "es")
+        self.assertIn("Qué corregir primero", text)
+        self.assertIn("Probable falso positivo", text)
+        self.assertIn("ai", json.loads(report.to_json(self.findings, self.checks, 1, ADVICE)))
+
+    def test_cli_without_sdk_explains_how_to_install(self):
+        try:
+            import anthropic  # noqa: F401
+            self.skipTest("anthropic SDK is installed")
+        except ImportError:
+            pass
+        r = run_cli(SAMPLES, "--ai", "--fail-on", "never")
+        self.assertEqual(r.returncode, 0)
+        self.assertIn("repocheckup[ai]", r.stderr)
+        self.assertIn("Overall score", r.stdout)
 
 
 class CliTests(unittest.TestCase):

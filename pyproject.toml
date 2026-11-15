@@ -18,6 +18,9 @@ classifiers = [
   "Topic :: Software Development :: Quality Assurance",
 ]
 
+[project.optional-dependencies]
+ai = ["anthropic>=1.0"]
+
 [project.urls]
 Homepage = "https://github.com/EdissonGT/repocheckup"
 

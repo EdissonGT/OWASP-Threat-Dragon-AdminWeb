@@ -42,6 +42,39 @@ python3 -m repocheckup samples/vulnerable-app --html report.html
 
 To silence a false positive on one line, add the comment `repocheckup-ignore`.
 
+## AI recommendations (`--ai`)
+
+Static rules tell you *what* is wrong. With `--ai`, Claude reads the findings together with the code around them and tells you *what to do about it*:
+
+- a short assessment of the repository,
+- a prioritized plan that groups findings sharing one fix, with the risk of leaving each as is,
+- the corrected code for the flagged lines,
+- which findings look like false positives,
+- quick wins that take minutes.
+
+```bash
+pip install "repocheckup[ai]"
+export ANTHROPIC_API_KEY=...            # from console.anthropic.com
+repocheckup /path/to/your/project --ai --html report.html
+```
+
+The advice appears in the terminal, in the HTML report and under the `ai` key of the JSON output.
+
+| Option | Description |
+|---|---|
+| `--ai` | Turn AI recommendations on. |
+| `--ai-model MODEL` | Model to use (default `claude-opus-5-5`; also `REPOCHECKUP_AI_MODEL`). |
+| `--ai-effort low\|medium\|high\|xhigh\|max` | How hard the model thinks. Higher costs more (default `medium`). |
+| `--ai-max-findings N` | How many findings, most severe first, are sent (default 40). |
+
+Before you turn it on:
+
+- **Your code leaves your machine.** The findings and about a dozen source lines around each one are sent to the Anthropic API. Nothing is sent without `--ai`.
+- **It costs money.** Each run is billed to your API key; the token count is printed after each run.
+- **It needs Python 3.10+** (a requirement of the Anthropic SDK). The rest of the tool still runs on 3.8.
+- **Review what it suggests.** It is a model reading snippets, not your whole project; treat its fixes as a proposal.
+- If the API is unreachable or the key is missing, the normal report is still produced.
+
 ## Scoring
 
 Each area starts at 100 and loses points per finding: critical 25, high 10, medium 4, low 1. The overall score is the average of the areas that ran. Grades: A ≥ 90, B ≥ 75, C ≥ 60, D ≥ 40, F below.

@@ -11,12 +11,17 @@ LABELS = {
     "en": {"security": "Security", "quality": "Code quality", "health": "Repository health", "deps": "Dependencies",
            "overall": "Overall score", "title": "Repository checkup", "files": "files analyzed", "findings": "findings",
            "none": "No findings. Well done.", "sev": "Severity", "rule": "Rule", "what": "Finding", "where": "Location",
-           "fix": "How to fix", "all": "All", "summary": "Summary", "generated": "Generated"},
+           "fix": "How to fix", "all": "All", "summary": "Summary", "generated": "Generated",
+           "ai": "AI recommendations", "priorities": "What to fix first", "quick": "Quick wins",
+           "fixes": "Suggested fixes", "fp": "Likely false positive", "effort": "effort", "why": "Why"},
     "es": {"security": "Seguridad", "quality": "Calidad de código", "health": "Salud del repositorio",
            "deps": "Dependencias", "overall": "Puntaje general", "title": "Chequeo del repositorio",
            "files": "archivos analizados", "findings": "hallazgos", "none": "Sin hallazgos. Buen trabajo.",
            "sev": "Severidad", "rule": "Regla", "what": "Hallazgo", "where": "Ubicación", "fix": "Cómo corregirlo",
-           "all": "Todos", "summary": "Resumen", "generated": "Generado"},
+           "all": "Todos", "summary": "Resumen", "generated": "Generado",
+           "ai": "Recomendaciones de IA", "priorities": "Qué corregir primero", "quick": "Mejoras rápidas",
+           "fixes": "Correcciones sugeridas", "fp": "Probable falso positivo", "effort": "esfuerzo",
+           "why": "Por qué"},
 }
 COLORS = {"critical": "\033[1;35m", "high": "\033[31m", "medium": "\033[33m", "low": "\033[36m"}
 
@@ -48,10 +53,32 @@ def to_text(findings, checks, files, lang, color=False):
     return "\n".join(out)
 
 
-def to_json(findings, checks, files):
+def ai_to_text(advice, lang):
+    L, out = LABELS[lang], [f"\n=== {LABELS[lang]['ai']} ===", advice["summary"], f"\n{LABELS[lang]['priorities']}:"]
+    for i, p in enumerate(advice["priorities"], 1):
+        out.append(f"{i}. {p['title']} [{L['effort']}: {p['effort']}] ({', '.join(p['rules'])})")
+        out.append(f"   {L['why']}: {p['why']}")
+        out += [f"   - {step}" for step in p["steps"]]
+    if advice["quick_wins"]:
+        out.append(f"\n{L['quick']}:")
+        out += [f"- {q}" for q in advice["quick_wins"]]
+    if advice["fixes"]:
+        out.append(f"\n{L['fixes']}:")
+    for f in advice["fixes"]:
+        flag = f" [{L['fp']}]" if f["false_positive"] else ""
+        out.append(f"* {f['rule']} {f['file']}:{f['line']}{flag}\n  {f['explanation']}")
+        if f["fixed_code"]:
+            out.append("\n".join("    " + line for line in f["fixed_code"].splitlines()))
+    return "\n".join(out)
+
+
+def to_json(findings, checks, files, advice=None):
     per, overall = scores(findings, checks)
-    return json.dumps({"version": __version__, "files": files, "score": overall, "grade": grade(overall),
-                       "scores": per, "findings": [f.to_dict() for f in findings]}, indent=2, ensure_ascii=False)
+    data = {"version": __version__, "files": files, "score": overall, "grade": grade(overall),
+            "scores": per, "findings": [f.to_dict() for f in findings]}
+    if advice is not None:
+        data["ai"] = advice
+    return json.dumps(data, indent=2, ensure_ascii=False)
 
 
 def to_sarif(findings):
@@ -93,6 +120,10 @@ th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--mute
 code{font:12.5px ui-monospace,Menlo,Consolas,monospace;word-break:break-all}.nw code{word-break:normal;white-space:nowrap}
 .sev{font-weight:600;text-transform:uppercase;font-size:12px}.critical{color:var(--critical)}.high{color:var(--high)}
 .medium{color:var(--medium)}.low{color:var(--low)}.ok{color:var(--good);padding:24px;text-align:center}
+.ai{margin:20px 0;border-color:var(--accent)}.ai b{display:inline;font-size:inherit}.ai h2{margin:0 0 8px;font-size:19px}.ai h3{margin:18px 0 6px;font-size:15px}
+.ai ol,.ai ul{margin:4px 0;padding-left:22px}.ai li{margin:6px 0}.ai pre{margin:6px 0;padding:10px;border-radius:8px;
+background:var(--bg);border:1px solid var(--line);overflow-x:auto;font:12.5px ui-monospace,Menlo,Consolas,monospace}
+.tag{display:inline-block;font-size:12px;padding:1px 8px;border-radius:10px;border:1px solid var(--line);color:var(--muted)}
 """
 JS = """
 document.querySelectorAll('button[data-c]').forEach(function(b){b.addEventListener('click',function(){
@@ -101,7 +132,27 @@ var c=b.dataset.c;document.querySelectorAll('tbody tr').forEach(function(r){r.hi
 """
 
 
-def to_html(findings, checks, files, lang, target=""):
+def ai_to_html(advice, lang):
+    L, e = LABELS[lang], html.escape
+    parts = [f'<div class="card ai"><h2>{e(L["ai"])}</h2><p>{e(advice["summary"])}</p><h3>{e(L["priorities"])}</h3><ol>']
+    for p in advice["priorities"]:
+        steps = "".join(f"<li>{e(s)}</li>" for s in p["steps"])
+        parts.append(f'<li><b>{e(p["title"])}</b> <span class="tag">{e(L["effort"])}: {e(p["effort"])}</span> '
+                     f'<span class="muted">{e(", ".join(p["rules"]))}</span><br>{e(p["why"])}<ul>{steps}</ul></li>')
+    parts.append("</ol>")
+    if advice["quick_wins"]:
+        parts.append(f'<h3>{e(L["quick"])}</h3><ul>' + "".join(f"<li>{e(q)}</li>" for q in advice["quick_wins"]) + "</ul>")
+    if advice["fixes"]:
+        parts.append(f'<h3>{e(L["fixes"])}</h3>')
+    for f in advice["fixes"]:
+        flag = f' <span class="tag">{e(L["fp"])}</span>' if f["false_positive"] else ""
+        code = f'<pre>{e(f["fixed_code"])}</pre>' if f["fixed_code"] else ""
+        parts.append(f'<p><code>{e(f["rule"])}</code> <code>{e(f["file"])}:{int(f["line"])}</code>{flag}<br>'
+                     f'{e(f["explanation"])}</p>{code}')
+    return "".join(parts) + "</div>"
+
+
+def to_html(findings, checks, files, lang, target="", advice=None):
     L, e = LABELS[lang], html.escape
     per, overall = scores(findings, checks)
     cards = [f'<div class="card main"><span class="muted">{e(L["overall"])}</span><b>{overall} · {grade(overall)}</b>'
@@ -127,5 +178,5 @@ def to_html(findings, checks, files, lang, target=""):
             f'<meta name="viewport" content="width=device-width,initial-scale=1"><title>{e(L["title"])}</title>'
             f'<style>{CSS}</style></head><body><main><h1>{e(L["title"])}</h1>'
             f'<div class="muted">{e(target)} · {files} {e(L["files"])} · {e(L["generated"])} {when} · repocheckup {__version__}</div>'
-            f'<div class="cards">{"".join(cards)}</div><div class="filters">{"".join(filters)}</div>{table}'
+            f'<div class="cards">{"".join(cards)}</div>{ai_to_html(advice, lang) if advice else ""}<div class="filters">{"".join(filters)}</div>{table}'
             f'</main><script>{JS}</script></body></html>')
