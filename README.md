@@ -43,3 +43,7 @@ Las versiones del modelo se conservan como copias del archivo JSON en `threat-mo
 | v1.0 | Modelo con las 49 amenazas STRIDE |
 | v1.1 | Disposición corregida de los diagramas y capturas de Threat Dragon |
 | v1.2 | Sugerencias automáticas de Threat Dragon y amenaza T-50 (vigente) |
+
+## Licencia
+
+MIT. Ver [LICENSE](LICENSE).
