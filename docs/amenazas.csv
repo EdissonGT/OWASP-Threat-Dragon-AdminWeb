@@ -1,0 +1,87 @@
+﻿ID,Elemento,STRIDE,Amenaza,Descripcion,Severidad,Mitigacion
+T-01,"Módulos de negocio
+(API)",Spoofing,Autenticación insuficiente en la API de negocio,"Si las rutas de negocio no verifican de forma consistente la identidad del llamante, un cliente con acceso a la red podría invocar operaciones sin sesión válida.",High,Exigir verificación de token en todas las rutas protegidas y propagar la credencial desde el cliente.
+T-02,"Módulos de negocio
+(API)",Elevation of privilege,Autorización validada solo en el cliente,"Si los permisos se evalúan únicamente en la interfaz, un usuario podría ejecutar funciones de otros perfiles invocando directamente la API.",High,Aplicar autorización por permiso en cada operación del backend.
+T-03,"Módulos de negocio
+(API)",Repudiation,Identidad del actor de auditoría controlada por el cliente,"Si el identificador del actor llega desde el cliente, las acciones podrían atribuirse a otro usuario y ser repudiadas.",High,Derivar el actor del token verificado y descartar valores enviados por el cliente.
+T-04,Scheduler (cron),Elevation of privilege,Endpoint administrativo del scheduler sin control de acceso,"Un endpoint que ejecuta tareas programadas manualmente podría ser invocado sin autorización, incluso mediante enlaces (CSRF).",High,"Retirar el endpoint de entornos no locales o exigir autenticación, rol administrador y método POST."
+T-05,"Módulo de
+autenticación",Spoofing,Fuerza bruta y relleno de credenciales en el login,Un atacante podría probar credenciales de forma masiva contra el formulario de acceso.,High,"Limitar intentos, bloqueo progresivo, MFA y alertas de acceso anómalo."
+T-06,"BD: credenciales
+y perfiles",Information disclosure,Almacenamiento débil de contraseñas,"Si el algoritmo de almacenamiento de contraseñas es débil o carece de sal, una filtración permitiría recuperarlas rápidamente.",High,"Usar un algoritmo adaptativo moderno (Argon2id, bcrypt) con sal única."
+T-07,"Módulo de
+autenticación",Spoofing,Secreto de firma de tokens predecible,Un secreto de firma con valor de desarrollo o débil permitiría forjar tokens válidos.,High,Generar secretos aleatorios por entorno y gestionarlos en un almacén de secretos.
+T-08,"Configuración cifrada
+(cifrada)",Information disclosure,Llave de cifrado de configuración expuesta,Una llave de cifrado embebida en el código o compartida permitiría descifrar la configuración sensible.,High,Externalizar las llaves a un gestor de secretos y rotarlas periódicamente.
+T-09,"Configuración cifrada
+(cifrada)",Information disclosure,Utilidades que imprimen secretos en consola,Herramientas auxiliares podrían mostrar secretos en consola o historiales.,Medium,Evitar imprimir secretos y enmascarar la salida.
+T-10,F-06 Peticiones de negocio,Information disclosure,Tráfico cliente-API sin cifrar,"Si el tráfico viaja sin TLS, un atacante en la red podría interceptar credenciales y datos.",High,Exigir TLS en todo el tráfico y habilitar HSTS.
+T-11,F-07 Respuestas JSON,Tampering,Manipulación de respuestas en tránsito,Respuestas sin protección de transporte podrían ser alteradas por un intermediario.,High,Usar TLS y validar el contenido recibido en el cliente.
+T-12,"localStorage
+(token y usuario)",Information disclosure,Token de sesión almacenado en el navegador,Guardar el token en almacenamiento accesible por scripts lo expone ante XSS.,High,Preferir cookies HttpOnly/SameSite y una política CSP estricta.
+T-13,"SPA App Web Administrativa
+(navegador)",Tampering,XSS por texto libre mostrado en la interfaz,Texto ingresado por usuarios podría ejecutarse como script si no se codifica al mostrarlo.,Medium,"Codificar la salida, sanear la entrada y aplicar CSP."
+T-14,"SPA App Web Administrativa
+(navegador)",Elevation of privilege,Evasión de controles de interfaz,Los controles aplicados solo en la UI pueden evitarse manipulando el cliente.,High,Replicar todas las validaciones y permisos en el servidor.
+T-15,"Módulo de
+autenticación",Denial of service,Login sin límites que agota recursos,Peticiones de acceso masivas podrían agotar conexiones u otros recursos del backend.,High,"Aplicar rate limiting, timeouts y protección de recursos."
+T-16,"Capa de acceso
+a datos",Denial of service,Gestión ineficiente de conexiones a la base de datos,Abrir una conexión por consulta puede agotar recursos bajo carga.,High,Usar un pool de conexiones con límites.
+T-17,"Módulos de negocio
+(API)",Denial of service,Consultas sin paginación,Consultas de historial o estadísticas sin límite podrían degradar el servicio.,High,"Paginar, limitar el tamaño de resultados y usar índices."
+T-18,"Módulo de reportes
+PDF/XLSX",Information disclosure,Exportación de datos sin control de acceso adecuado,Funciones de exportación podrían entregar datos a usuarios no autorizados.,High,Aplicar autorización y registrar cada exportación.
+T-19,"Módulo de reportes
+PDF/XLSX",Tampering,Inyección de fórmulas en archivos de hoja de cálculo,Valores que empiezan con caracteres especiales podrían ejecutarse como fórmulas al abrir el archivo.,Medium,"Neutralizar valores que inician con =, +, - o @."
+T-20,"Módulos de negocio
+(API)",Information disclosure,Mensajes de error con detalle interno,Una configuración incorrecta podría exponer trazas o detalles internos en los errores.,High,Mensajes genéricos al cliente y detalle solo en logs.
+T-21,"Servidor web
+(estáticos)",Information disclosure,Política CORS permisiva,Una política CORS demasiado abierta permitiría a orígenes no confiables consumir la API.,High,Restringir orígenes permitidos por entorno.
+T-22,"Módulos de negocio
+(API)",Tampering,Validación de entrada heterogénea,Validaciones desiguales entre módulos podrían permitir datos malformados.,High,Centralizar la validación con esquemas.
+T-23,"Capa de acceso
+a datos",Tampering,Construcción dinámica de consultas SQL,Fragmentos SQL dinámicos podrían derivar en inyección si no se parametrizan.,Medium,Usar consultas parametrizadas y listas blancas.
+T-24,BD: datos operativos,Tampering,Manipulación de datos operativos,Un actor con acceso podría alterar el estado de los datos operativos.,High,"Control de acceso, auditoría y doble control en cambios críticos."
+T-25,BD: datos operativos,Information disclosure,Exposición de datos operativos,Datos operativos podrían divulgarse por acceso indebido o configuración incorrecta.,High,"Mínimo privilegio, cifrado y monitoreo de acceso."
+T-26,F-12 SQL operativo (R/W),Information disclosure,Conexión a la base de datos sin cifrado verificado,"Si la conexión a la base de datos no está cifrada, el tráfico podría ser interceptado.",High,Habilitar TLS y verificar certificados.
+T-27,"BD: credenciales
+y perfiles",Elevation of privilege,Cuenta de base de datos con privilegios amplios,Una cuenta de servicio con permisos excesivos amplía el impacto de un compromiso.,High,Aplicar mínimo privilegio y separar cuentas por función.
+T-28,"Capa de acceso
+a datos",Information disclosure,Datos de infraestructura en logs,Los logs podrían incluir datos técnicos sensibles.,Medium,Enmascarar datos sensibles y revisar el contenido de los logs.
+T-29,Logs de aplicación,Repudiation,Logs locales sin centralización ni integridad,Logs solo locales podrían ser alterados o perderse.,High,Centralizar logs con protección de integridad y retención.
+T-30,"Módulo de
+autenticación",Repudiation,Origen de conexión falsificable en el registro,"Si se confía en cabeceras controladas por el cliente, el registro de origen podría falsificarse.",High,Confiar solo en proxies conocidos para determinar el origen.
+T-31,Scheduler (cron),Tampering,Programaciones falsas ejecutadas por el scheduler,Programaciones manipuladas podrían provocar ejecuciones no autorizadas.,High,Validar integridad y autoría de las programaciones.
+T-32,Scheduler (cron),Denial of service,Scheduler dependiente de una única instancia,Una única instancia es un punto único de fallo.,High,Alta disponibilidad o mecanismo de recuperación.
+T-33,"Servidor web
+(estáticos)",Information disclosure,Publicación de source maps,Los source maps en producción facilitan la ingeniería inversa del cliente.,Medium,No publicar source maps en producción.
+T-34,"Servidor web
+(estáticos)",Information disclosure,Documentación interna accesible sin autenticación,Material interno accesible públicamente revela detalles del sistema.,High,Restringir el acceso o retirarlo de producción.
+T-35,"Módulo de reportes
+PDF/XLSX",Tampering,Dependencias de terceros vulnerables,Librerías con vulnerabilidades conocidas pueden ser explotadas.,High,Análisis de dependencias (SCA) y actualización periódica.
+T-36,"Repositorio de código
+(rama qa)",Spoofing,Credenciales de desarrollador comprometidas,Credenciales robadas permitirían modificar código o pipelines.,High,"MFA, rotación de credenciales y revisión de accesos."
+T-37,"Instalación de
+dependencias",Tampering,Instalación de dependencias directamente en el servidor,Instalar paquetes en el servidor de destino amplía la superficie de ataque de la cadena de suministro.,High,Construir artefactos en CI y desplegar solo el resultado verificado.
+T-38,Agente de CI/CD,Elevation of privilege,Agente de CI/CD con privilegios excesivos,Un agente con cuenta administrativa amplía el impacto de un compromiso del pipeline.,High,Mínimo privilegio y agentes efímeros aislados.
+T-39,"Pipeline CI/CD
+(disparador push qa)",Repudiation,Despliegue sin aprobación ni trazabilidad,Despliegues sin aprobación o versión identificable dificultan la responsabilidad.,High,"Aprobaciones, versionado y registro de despliegues."
+T-40,"Pipeline CI/CD
+(disparador push qa)",Information disclosure,Pipeline sin escaneo de secretos ni análisis de código,La ausencia de controles automáticos permite introducir secretos o vulnerabilidades.,High,"Incorporar escaneo de secretos, SAST y SCA."
+T-41,"Publicar artefacto
+(excluye secretos)",Denial of service,Despliegue sin mecanismo de rollback,Un despliegue fallido podría dejar el servicio caído.,High,Despliegues con verificación previa y rollback.
+T-42,"Publicar artefacto
+(excluye secretos)",Tampering,Copia de artefactos sin verificación de integridad,Artefactos no verificados podrían alterarse antes de publicarse.,Medium,Firmar artefactos y verificar su integridad.
+T-43,Usuario administrativo,Spoofing,Phishing o credenciales débiles de usuarios administrativos,Credenciales robadas o débiles darían acceso amplio al panel.,High,"MFA, política de contraseñas y capacitación anti-phishing."
+T-44,"SPA App Web Administrativa
+(navegador)",Information disclosure,Sesiones largas sin revocación,Sesiones de larga duración sin revocación amplían la ventana de abuso de un token robado.,High,"Expiración corta, renovación y lista de revocación."
+T-45,BD: permisos del panel,Elevation of privilege,Cambios de permisos sin auditoría ni doble control,Modificaciones de permisos sin trazabilidad permiten escalar privilegios.,Medium,Auditar y requerir aprobación dual.
+T-46,"Repositorio de código
+(rama qa)",Information disclosure,Datos de infraestructura en el repositorio,Datos técnicos o secretos en el repositorio podrían ser expuestos.,High,Escaneo de secretos y repositorios privados.
+T-47,Sistema externo consumidor,Tampering,Sistema externo consume datos sin controles de integridad,Un sistema consumidor podría actuar sobre datos alterados.,High,Validar integridad y origen de los datos compartidos.
+T-48,BD: bitácora de auditoría,Tampering,Bitácora modificable por la propia aplicación,"Si la cuenta de la aplicación puede alterar la bitácora, se pierde su valor probatorio.",High,Bitácora de solo anexado y separación de privilegios.
+T-49,"Equipo DevOps /
+Desarrollo",Repudiation,Acceso administrativo compartido,Cuentas compartidas impiden atribuir acciones a una persona.,High,Cuentas nominales y registro de sesiones.
+T-50,"Servidor web
+(estáticos)",Information disclosure,Escaneo automatizado de vulnerabilidades,Escáneres automáticos podrían descubrir y explotar debilidades expuestas.,Medium,"WAF, rate limiting y monitoreo de escaneos."
