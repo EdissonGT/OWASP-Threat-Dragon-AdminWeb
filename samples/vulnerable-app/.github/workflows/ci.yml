@@ -1,0 +1,8 @@
+# DELIBERATELY insecure workflow. Do not use.
+on:
+  pull_request_target:
+jobs:
+  greet:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "PR title is ${{ github.event.pull_request.title }}"

@@ -2,7 +2,7 @@
 
 ## Alcance
 
-Este repositorio contiene guías de buenas prácticas y ejemplos de código de demostración. No contiene datos de sistemas reales.
+Este repositorio contiene la herramienta `repocheckup`, guías de buenas prácticas y ejemplos. `samples/vulnerable-app` es inseguro a propósito: no lo reportes.
 
 ## Reportar un problema
 

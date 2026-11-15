@@ -1,0 +1,15 @@
+# DELIBERATELY insecure manifest. Do not apply.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: practice
+spec:
+  template:
+    spec:
+      hostNetwork: true
+      containers:
+        - name: app
+          image: nginx:latest
+          securityContext:
+            privileged: true
+            runAsUser: 0

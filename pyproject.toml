@@ -3,17 +3,26 @@ requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "appsec-scan"
-version = "1.0.0"
-description = "Analizador estático ligero de patrones inseguros y guía de buenas prácticas de seguridad de aplicaciones"
+name = "repocheckup"
+version = "2.0.0"
+description = "Security, code quality, repository health and dependency checks with a score and an HTML report. No dependencies."
 readme = "README.md"
 requires-python = ">=3.8"
 license = { text = "MIT" }
 authors = [{ name = "Edisson Payes" }]
-keywords = ["security", "appsec", "owasp", "static-analysis", "sast"]
+keywords = ["security", "appsec", "sast", "code-quality", "linter", "devsecops", "owasp", "static-analysis"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Topic :: Security",
+  "Topic :: Software Development :: Quality Assurance",
+]
+
+[project.urls]
+Homepage = "https://github.com/EdissonGT/OWASP-Threat-Dragon-AdminWeb"
 
 [project.scripts]
-appsec-scan = "appsec_scan.__main__:main"
+repocheckup = "repocheckup.__main__:main"
 
 [tool.setuptools]
-packages = ["appsec_scan"]
+packages = ["repocheckup"]

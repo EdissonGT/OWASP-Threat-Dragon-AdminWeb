@@ -28,15 +28,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/dependency-review-action@v4
-  appsec-scan:                  # este analizador
+  repocheckup:                  # security + code quality + repository health, with score
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: pip install git+https://github.com/EdissonGT/OWASP-Threat-Dragon-AdminWeb.git
-      - run: appsec-scan . --format sarif --fail-on high > appsec.sarif || true
+      - uses: EdissonGT/OWASP-Threat-Dragon-AdminWeb@main
+        with:
+          fail-on: high          # low | medium | high | critical | never
+          min-score: "0"         # e.g. "70" to require a minimum score
       - uses: github/codeql-action/upload-sarif@v3
-        with: { sarif_file: appsec.sarif }
-      - run: appsec-scan . --fail-on high
+        if: always()
+        with: { sarif_file: repocheckup.sarif }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: repocheckup-report, path: repocheckup-report.html }
   container:                    # imágenes (si usas Docker)
     runs-on: ubuntu-latest
     steps:

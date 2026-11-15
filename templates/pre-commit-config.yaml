@@ -6,8 +6,8 @@ repos:
       - id: gitleaks
   - repo: local
     hooks:
-      - id: appsec-scan
-        name: appsec-scan
-        entry: appsec-scan --fail-on high
+      - id: repocheckup
+        name: repocheckup
+        entry: repocheckup --checks security,quality --fail-on high
         language: system
         pass_filenames: true

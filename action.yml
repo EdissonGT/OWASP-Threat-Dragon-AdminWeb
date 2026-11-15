@@ -1,0 +1,63 @@
+name: repocheckup
+description: Security, code quality, repository health and dependency checks with a score and an HTML report.
+author: Edisson Payes
+branding:
+  icon: shield
+  color: blue
+inputs:
+  path:
+    description: File or folder to analyze
+    default: "."
+  checks:
+    description: "Comma-separated checks: security, quality, health, deps, or all"
+    default: "security,quality,health"
+  fail-on:
+    description: "Fail if a finding of this severity or higher exists: low, medium, high, critical, never"
+    default: high
+  min-score:
+    description: Fail if the overall score (0-100) is below this value
+    default: "0"
+  exclude:
+    description: Space-separated folder names to exclude
+    default: ""
+  lang:
+    description: "Language of the messages: en or es"
+    default: en
+  sarif-file:
+    description: Where to write the SARIF report (upload it with github/codeql-action/upload-sarif)
+    default: repocheckup.sarif
+  html-file:
+    description: Where to write the HTML report
+    default: repocheckup-report.html
+outputs:
+  score:
+    description: Overall score from 0 to 100
+    value: ${{ steps.run.outputs.score }}
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+    - id: run
+      shell: bash
+      env:
+        RC_PATH: ${{ inputs.path }}
+        RC_CHECKS: ${{ inputs.checks }}
+        RC_FAIL_ON: ${{ inputs.fail-on }}
+        RC_MIN_SCORE: ${{ inputs.min-score }}
+        RC_EXCLUDE: ${{ inputs.exclude }}
+        RC_LANG: ${{ inputs.lang }}
+        RC_SARIF: ${{ inputs.sarif-file }}
+        RC_HTML: ${{ inputs.html-file }}
+        PYTHONPATH: ${{ github.action_path }}
+      run: |
+        args=()
+        for d in $RC_EXCLUDE; do args+=(--exclude "$d"); done
+        python3 -m repocheckup "$RC_PATH" --checks "$RC_CHECKS" --lang "$RC_LANG" "${args[@]}" \
+          --format sarif --output "$RC_SARIF" --html "$RC_HTML" --fail-on never
+        score=$(python3 -m repocheckup "$RC_PATH" --checks "$RC_CHECKS" "${args[@]}" --format json --fail-on never \
+          | python3 -c "import json,sys; print(json.load(sys.stdin)['score'])")
+        echo "score=$score" >> "$GITHUB_OUTPUT"
+        python3 -m repocheckup "$RC_PATH" --checks "$RC_CHECKS" --lang "$RC_LANG" "${args[@]}" \
+          --fail-on "$RC_FAIL_ON" --min-score "$RC_MIN_SCORE"

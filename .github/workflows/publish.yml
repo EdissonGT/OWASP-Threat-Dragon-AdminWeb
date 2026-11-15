@@ -1,0 +1,22 @@
+# Publishes to PyPI when a GitHub Release is created.
+# One-time setup: on pypi.org add a "trusted publisher" for this repository and this workflow file.
+name: Publish to PyPI
+on:
+  release:
+    types: [published]
+permissions:
+  contents: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python3 -m unittest discover -s tests
+      - run: python3 -m pip install build && python3 -m build
+      - uses: pypa/gh-action-pypi-publish@release/v1

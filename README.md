@@ -1,52 +1,75 @@
-# Mejores prácticas de seguridad de aplicaciones
+# repocheckup
 
-Guía abierta y práctica para **mejorar la seguridad de una aplicación web**, con un **analizador de código ejecutable** para revisar tu proyecto. Pensada para equipos de desarrollo que quieren una referencia concisa, accionable y alineada con estándares ([OWASP ASVS](https://owasp.org/www-project-application-security-verification-standard/), [OWASP Top 10](https://owasp.org/www-project-top-ten/), NIST SSDF, SLSA).
+[![CI](https://github.com/EdissonGT/OWASP-Threat-Dragon-AdminWeb/actions/workflows/validate.yml/badge.svg)](https://github.com/EdissonGT/OWASP-Threat-Dragon-AdminWeb/actions/workflows/validate.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-## Analiza tu código en 30 segundos
+**A health checkup for any code repository.** One command reviews security, code quality, repository health and dependencies, gives the project a score from 0 to 100 and tells you how to fix each finding.
+
+No dependencies. Only Python 3.8+. Works offline. Messages in English and Spanish.
+
+🇪🇸 [Leer en español](README.es.md)
+
+## Quick start
 
 ```bash
 git clone https://github.com/EdissonGT/OWASP-Threat-Dragon-AdminWeb.git
 cd OWASP-Threat-Dragon-AdminWeb
-python3 -m appsec_scan /ruta/a/tu/proyecto      # solo requiere Python 3.8+
-python3 -m appsec_scan samples/vulnerable-app   # prueba con código vulnerable de práctica
+python3 -m repocheckup /path/to/your/project --html report.html
 ```
 
-Detecta secretos embebidos, inyección SQL/comandos, criptografía débil, XSS, TLS deshabilitado, CORS abierto, JWT inseguro, Dockerfiles sin usuario no-root y más. Salida en texto, JSON o SARIF. Ver [docs/09](docs/09-analizador-de-codigo.md).
+```
+[HIGH] INJ001 SQL built by concatenation or interpolation (CWE-89)
+  app.py:13
+  > cursor.execute("SELECT * FROM users WHERE name = '%s'" % user)
+  How to fix: Use parameterized queries or an ORM.
 
-## Guías
+Summary: 11 files analyzed, 49 findings
+  Security                   0/100  F  (34)
+  Code quality              82/100  B  (6)
+  Repository health         76/100  B  (9)
+  Overall score             53/100  D
+```
 
-| # | Tema |
+Want to see it work first? Run it on the deliberately broken practice project in [`samples/vulnerable-app`](samples/vulnerable-app).
+
+## What it checks
+
+| Area | Examples |
 |---|---|
-| [01](docs/01-autenticacion-y-sesiones.md) | Autenticación, contraseñas y sesiones |
-| [02](docs/02-autorizacion.md) | Autorización y control de acceso |
-| [03](docs/03-validacion-y-api.md) | Validación de entrada/salida y seguridad de APIs |
-| [04](docs/04-datos-secretos-y-criptografia.md) | Datos, secretos y criptografía |
-| [05](docs/05-infraestructura-bd-y-logging.md) | Base de datos, infraestructura, logging y disponibilidad |
-| [06](docs/06-cadena-de-suministro-y-cicd.md) | Cadena de suministro y CI/CD |
-| [07](docs/07-ciclo-de-desarrollo-seguro.md) | Ciclo de desarrollo seguro y modelado de amenazas (STRIDE) |
-| [08](docs/08-owasp-top-10.md) | OWASP Top 10 y su mitigación |
-| [09](docs/09-analizador-de-codigo.md) | Analizador de código `appsec-scan` |
+| **Security** | Hardcoded secrets, SQL and command injection, weak crypto, XSS, disabled TLS, open CORS, unverified JWT, Dockerfile / Terraform / Kubernetes / GitHub Actions misconfigurations |
+| **Code quality** | Long or complex functions, too many parameters, silenced errors, mutable defaults, TODO leftovers, duplicated code |
+| **Repository health** | Missing README, license, tests, CI, lockfile, security policy; unpinned dependencies; committed `.env` files |
+| **Dependencies** (`--deps`) | Known vulnerabilities in pinned PyPI and npm packages, via [OSV.dev](https://osv.dev) |
 
-## Recursos prácticos
+Output as text, JSON, SARIF (GitHub Code Scanning) or a self-contained HTML report. Full options and rule list: [docs/USAGE.md](docs/USAGE.md).
 
-- [Checklist de seguridad](checklists/checklist-seguridad-aplicacion.md) para cada release.
-- [Ejemplo Node/Express](examples/node-express/secure-server.js) con helmet, rate limiting, validación y autorización.
-- [Ejemplo Python/Flask](examples/python-flask/secure_app.py) con Argon2id, límites y headers.
-- [Headers de seguridad recomendados](examples/security-headers.md).
-- [Plantillas de CI/CD](templates/) listas para copiar: GitHub Actions (CodeQL, gitleaks, Trivy), Dependabot y pre-commit.
-- [Código vulnerable de práctica](samples/vulnerable-app/) para aprender a detectar y corregir.
+## Use it in GitHub Actions
 
-## Por dónde empezar
+```yaml
+- uses: actions/checkout@v4
+- uses: EdissonGT/OWASP-Threat-Dragon-AdminWeb@main
+  with:
+    fail-on: high      # low | medium | high | critical | never
+    min-score: "70"    # optional quality gate
+```
 
-1. Autenticación y autorización en el **servidor**, y TLS en todo el tráfico.
-2. Gestión de secretos y almacenamiento seguro de contraseñas.
-3. Validación de entrada y control de dependencias.
-4. Logging, monitoreo y pipeline CI/CD seguro.
-5. Mejora continua: modelado de amenazas en cada cambio importante.
+## More than a tool
 
-## Contribuir y seguridad
+This repository also includes material to **fix** what the tool finds:
 
-- [CONTRIBUTING.md](CONTRIBUTING.md) · [SECURITY.md](SECURITY.md) · [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
-- Pruebas: `python3 -m unittest discover -s tests`. GitHub Actions las ejecuta junto con `scripts/check_secrets.py`.
+- **Guides** (in Spanish) in [`docs/`](docs): authentication, authorization, input validation and APIs, data and cryptography, infrastructure and logging, supply chain and CI/CD, secure development lifecycle, OWASP Top 10, code quality, repository health.
+- **[Release checklist](checklists/checklist-seguridad-aplicacion.md)** for application security.
+- **Secure code examples** for [Node/Express](examples/node-express/secure-server.js) and [Python/Flask](examples/python-flask/secure_app.py), plus [recommended security headers](examples/security-headers.md).
+- **CI templates** in [`templates/`](templates): security workflow (CodeQL, gitleaks, Trivy), Dependabot and pre-commit.
 
-Autor: Edisson Payes · Licencia: [MIT](LICENSE)
+## Limits
+
+`repocheckup` is pattern-based: expect false positives and false negatives. It is a fast first pass, not a replacement for code review, tests or dedicated tools such as CodeQL, Semgrep or SonarQube.
+
+## Contributing
+
+New rules, languages and translations are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md). Run the tests with `python3 -m unittest discover -s tests`.
+
+## License
+
+[MIT](LICENSE) © Edisson Payes

@@ -1,4 +1,4 @@
-// Código DELIBERADAMENTE vulnerable para practicar con el analizador. No usar en producción.
+// DELIBERATELY vulnerable code to practice with the analyzer. Do not use in production.
 const express = require('express');
 const cors = require('cors');
 const { exec } = require('child_process');
@@ -13,6 +13,7 @@ app.get('/user', (req, res) => {
   db.query(`SELECT * FROM users WHERE id = ${req.query.id}`);          // INJ001
   document.getElementById('x').innerHTML = req.query.name;            // XSS001
   const token = 'tok_' + Math.random().toString(36);                  // CRY003
+  try { JSON.parse(req.query.data); } catch (e) {}                    // QLT005
 });
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';                       // CRY002

@@ -2,6 +2,7 @@
 
 ¡Gracias por tu interés! Se aceptan:
 
+- Reglas nuevas para `repocheckup` (con su prueba), soporte de más lenguajes y corrección de falsos positivos.
 - Nuevas buenas prácticas, correcciones y ejemplos de código seguro.
 - Mejoras a las checklists y a la redacción.
 - Traducciones.

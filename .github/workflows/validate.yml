@@ -5,11 +5,20 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.12"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with: { python-version: "3.12" }
+        with:
+          python-version: ${{ matrix.python-version }}
       - run: python3 -m unittest discover -s tests -v
       - run: python3 scripts/check_secrets.py
-      - name: Analiza este repositorio (excluye el código vulnerable de práctica)
-        run: python3 -m appsec_scan . --exclude samples --exclude tests --fail-on high
+      - name: Analyze this repository (practice samples excluded)
+        run: python3 -m repocheckup . --exclude samples --fail-on medium --html report.html
+      - uses: actions/upload-artifact@v4
+        if: matrix.python-version == '3.12'
+        with:
+          name: repocheckup-report
+          path: report.html
