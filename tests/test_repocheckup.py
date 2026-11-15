@@ -152,6 +152,17 @@ class ReportTests(unittest.TestCase):
         self.assertNotIn("<b>target</b>", page)
         self.assertIn("&lt;script&gt;alert(1)", page)
 
+    def test_themes(self):
+        found = security.check_file(Path("a.py"), "h = hashlib.m" + "d5(x)\n")
+        matrix = report.to_html(found, ["security"], 1, "en")
+        classic = report.to_html(found, ["security"], 1, "en", theme="classic")
+        self.assertIn('<canvas id="rain"', matrix)
+        self.assertIn("prefers-reduced-motion", matrix)
+        self.assertNotIn("rain", classic)
+        self.assertIn("repocheckup_", report.to_text(found, ["security"], 1, "en", color=True))
+        self.assertNotIn("repocheckup_", report.to_text(found, ["security"], 1, "en", color=False))
+        self.assertNotIn("repocheckup_", report.to_text(found, ["security"], 1, "en", color=True, theme="classic"))
+
     def test_spanish_messages(self):
         found = security.check_file(Path("a.py"), "h = hashlib.m" + "d5(x)\n", "es")
         self.assertIn("Hash débil", found[0].title)

@@ -32,13 +32,14 @@ python3 -m repocheckup samples/vulnerable-app --lang es --html reporte.html
 |---|---|
 | `--checks security,quality,health` | Áreas a ejecutar. `all` agrega `deps`. |
 | `--deps` | Consulta también las dependencias en OSV.dev. **Envía nombres y versiones de paquetes a api.osv.dev.** |
-| `--html ARCHIVO` | Genera un informe HTML autónomo (funciona sin conexión, tema claro y oscuro). |
+| `--html ARCHIVO` | Genera un informe HTML autónomo (funciona sin conexión). |
 | `--format text\|json\|sarif` | Formato de la salida principal. SARIF se sube a GitHub Code Scanning. |
 | `--output ARCHIVO` | Escribe la salida principal en un archivo. |
 | `--fail-on low\|medium\|high\|critical\|never` | Código de salida 1 si hay hallazgos de esa severidad o mayor (por defecto `high`). |
 | `--min-score N` | Código de salida 1 si el puntaje general es menor que `N`. |
 | `--exclude NOMBRE` | Carpeta a omitir (repetible). |
 | `--lang en\|es` | Idioma de los mensajes. |
+| `--theme matrix\|classic` | Aspecto del informe HTML y del encabezado en la terminal. `matrix` (por defecto) es verde sobre negro con lluvia de código; `classic` es un tema claro y oscuro sencillo. |
 
 Para silenciar un falso positivo en una línea, agrega el comentario `repocheckup-ignore`.
 

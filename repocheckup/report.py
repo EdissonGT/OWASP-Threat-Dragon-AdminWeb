@@ -36,8 +36,16 @@ def scores(findings, checks):
     return per, overall
 
 
-def to_text(findings, checks, files, lang, color=False):
+BANNER = {"en": "Wake up... the repo has you. Follow the findings.",
+          "es": "Despierta... el repo te tiene. Sigue los hallazgos."}
+GREEN, RESET = "\033[1;32m", "\033[0m"
+
+
+def to_text(findings, checks, files, lang, color=False, theme="matrix"):
     L, out = LABELS[lang], []
+    matrix = color and theme == "matrix"
+    if matrix:
+        out.append(f"{GREEN}> repocheckup_  {BANNER[lang]}{RESET}\n")
     for f in findings:
         sev = f"{COLORS[f.severity]}{f.severity.upper()}\033[0m" if color else f.severity.upper()
         cwe = f" ({f.cwe})" if f.cwe else ""
@@ -49,7 +57,8 @@ def to_text(findings, checks, files, lang, color=False):
     for c in checks:
         n = sum(1 for f in findings if f.category == c)
         out.append(f"  {L[c]:<24} {per[c]:>3}/100  {grade(per[c])}  ({n})")
-    out.append(f"  {L['overall']:<24} {overall:>3}/100  {grade(overall)}")
+    last = f"  {L['overall']:<24} {overall:>3}/100  {grade(overall)}"
+    out.append(f"{GREEN}{last}{RESET}" if matrix else last)
     return "\n".join(out)
 
 
@@ -125,6 +134,31 @@ code{font:12.5px ui-monospace,Menlo,Consolas,monospace;word-break:break-all}.nw 
 background:var(--bg);border:1px solid var(--line);overflow-x:auto;font:12.5px ui-monospace,Menlo,Consolas,monospace}
 .tag{display:inline-block;font-size:12px;padding:1px 8px;border-radius:10px;border:1px solid var(--line);color:var(--muted)}
 """
+MATRIX_CSS = """
+:root{--bg:#000;--card:rgba(0,14,2,.88);--text:#00ff41;--muted:#00b32d;--line:#00501a;--accent:#00ff41;
+--critical:#ff5cf4;--high:#ff5c5c;--medium:#ffd75c;--low:#5cd6ff;--good:#00ff41}
+body{font-family:ui-monospace,Menlo,Consolas,"Courier New",monospace;font-size:14px}
+#rain{position:fixed;inset:0;width:100%;height:100%;z-index:0;opacity:.22;pointer-events:none}
+main{position:relative;z-index:1}
+h1{text-transform:lowercase;letter-spacing:.06em;text-shadow:0 0 8px #00ff41}h1::before{content:"> "}
+h1::after{content:"_";animation:blink 1s steps(1) infinite}@keyframes blink{50%{opacity:0}}
+.card,.wrap,button{border-radius:2px}.card.main,.ai{box-shadow:0 0 14px rgba(0,255,65,.35)}
+.card b{text-shadow:0 0 6px rgba(0,255,65,.7)}.ai b{text-shadow:none}.bar,.bar i{border-radius:0}
+button{font-family:inherit}button.on{color:#000;font-weight:700}
+th{color:var(--accent)}.ai pre{background:#000}
+@media (prefers-reduced-motion:reduce){#rain{display:none}h1::after{animation:none}}
+"""
+RAIN_JS = """
+(function(){if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+var c=document.getElementById('rain');if(!c)return;var x=c.getContext('2d'),s=16,d=[];
+var g='\\u30a2\\u30a4\\u30a6\\u30a8\\u30aa\\u30ab\\u30ad\\u30af\\u30b1\\u30b3\\u30b5\\u30b7\\u30b9\\u30bb\\u30bd0123456789ABCDEF<>/{}';
+function fit(){c.width=innerWidth;c.height=innerHeight;d=[];for(var i=0;i<c.width/s;i++)d.push(Math.random()*-50)}
+function draw(){x.fillStyle='rgba(0,0,0,.08)';x.fillRect(0,0,c.width,c.height);x.fillStyle='#00ff41';x.font=s+'px monospace';
+for(var i=0;i<d.length;i++){x.fillText(g.charAt(Math.floor(Math.random()*g.length)),i*s,d[i]*s);
+if(d[i]*s>c.height&&Math.random()>.975)d[i]=0;d[i]++}}
+fit();addEventListener('resize',fit);setInterval(draw,60)})();
+"""
+THEMES = ("matrix", "classic")
 JS = """
 document.querySelectorAll('button[data-c]').forEach(function(b){b.addEventListener('click',function(){
 document.querySelectorAll('button[data-c]').forEach(function(x){x.classList.toggle('on',x===b)});
@@ -152,7 +186,7 @@ def ai_to_html(advice, lang):
     return "".join(parts) + "</div>"
 
 
-def to_html(findings, checks, files, lang, target="", advice=None):
+def to_html(findings, checks, files, lang, target="", advice=None, theme="matrix"):
     L, e = LABELS[lang], html.escape
     per, overall = scores(findings, checks)
     cards = [f'<div class="card main"><span class="muted">{e(L["overall"])}</span><b>{overall} · {grade(overall)}</b>'
@@ -174,9 +208,11 @@ def to_html(findings, checks, files, lang, target="", advice=None):
              f'<th>{e(L["where"])}</th><th>{e(L["fix"])}</th></tr></thead><tbody>{"".join(rows)}</tbody></table></div>'
              if rows else f'<div class="card ok">{e(L["none"])}</div>')
     when = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    matrix = theme == "matrix"
+    rain = '<canvas id="rain" aria-hidden="true"></canvas>' if matrix else ""
     return (f'<!doctype html><html lang="{lang}"><head><meta charset="utf-8">'
             f'<meta name="viewport" content="width=device-width,initial-scale=1"><title>{e(L["title"])}</title>'
-            f'<style>{CSS}</style></head><body><main><h1>{e(L["title"])}</h1>'
+            f'<style>{CSS}{MATRIX_CSS if matrix else ""}</style></head><body>{rain}<main><h1>{e(L["title"])}</h1>'
             f'<div class="muted">{e(target)} · {files} {e(L["files"])} · {e(L["generated"])} {when} · repocheckup {__version__}</div>'
             f'<div class="cards">{"".join(cards)}</div>{ai_to_html(advice, lang) if advice else ""}<div class="filters">{"".join(filters)}</div>{table}'
-            f'</main><script>{JS}</script></body></html>')
+            f'</main><script>{JS}{RAIN_JS if matrix else ""}</script></body></html>')

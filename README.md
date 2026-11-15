@@ -52,7 +52,7 @@ It is off by default. When on, the findings and a few lines of code around each 
 | **Repository health** | Missing README, license, tests, CI, lockfile, security policy; unpinned dependencies; committed `.env` files |
 | **Dependencies** (`--deps`) | Known vulnerabilities in pinned PyPI and npm packages, via [OSV.dev](https://osv.dev) |
 
-Output as text, JSON, SARIF (GitHub Code Scanning) or a self-contained HTML report. Full options and rule list: [docs/USAGE.md](docs/USAGE.md).
+Output as text, JSON, SARIF (GitHub Code Scanning) or a self-contained HTML report with a Matrix look (`--theme classic` for a plain one). Full options and rule list: [docs/USAGE.md](docs/USAGE.md).
 
 ## Use it in GitHub Actions
 

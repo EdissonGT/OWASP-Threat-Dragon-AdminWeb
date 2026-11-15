@@ -49,7 +49,7 @@ Está apagada por defecto. Al activarla, los hallazgos y unas líneas de código
 | **Salud del repositorio** | Falta de README, licencia, pruebas, CI, lockfile o política de seguridad; dependencias sin fijar; archivos `.env` versionados |
 | **Dependencias** (`--deps`) | Vulnerabilidades conocidas en paquetes fijados de PyPI y npm, con [OSV.dev](https://osv.dev) |
 
-Salida en texto, JSON, SARIF (GitHub Code Scanning) o un informe HTML autónomo. Opciones completas en la [guía de uso](docs/09-uso-de-repocheckup.md).
+Salida en texto, JSON, SARIF (GitHub Code Scanning) o un informe HTML autónomo con estilo Matrix (`--theme classic` para uno sencillo). Opciones completas en la [guía de uso](docs/09-uso-de-repocheckup.md).
 
 ## Usarlo en GitHub Actions
 

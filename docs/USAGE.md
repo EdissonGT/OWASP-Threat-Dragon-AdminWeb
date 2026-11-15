@@ -32,13 +32,14 @@ python3 -m repocheckup samples/vulnerable-app --html report.html
 |---|---|
 | `--checks security,quality,health` | Which areas to run. `all` adds `deps`. |
 | `--deps` | Also look up pinned dependencies in OSV.dev. **Sends package names and versions to api.osv.dev.** |
-| `--html FILE` | Write a self-contained HTML report (works offline, light and dark theme). |
+| `--html FILE` | Write a self-contained HTML report (works offline). |
 | `--format text\|json\|sarif` | Main output format. SARIF can be uploaded to GitHub Code Scanning. |
 | `--output FILE` | Write the main output to a file. |
 | `--fail-on low\|medium\|high\|critical\|never` | Exit code 1 when a finding of that severity or higher exists (default `high`). |
 | `--min-score N` | Exit code 1 when the overall score is below `N`. |
 | `--exclude NAME` | Folder name to skip (repeatable). `.git`, `node_modules`, `venv`, `dist`… are always skipped. |
 | `--lang en\|es` | Language of the messages (default follows `LANG`). |
+| `--theme matrix\|classic` | Look of the HTML report and the terminal banner. `matrix` (default) is green on black with falling code; `classic` is a plain light and dark theme. |
 
 To silence a false positive on one line, add the comment `repocheckup-ignore`.
 

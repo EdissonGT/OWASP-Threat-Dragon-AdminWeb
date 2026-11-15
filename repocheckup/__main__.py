@@ -41,6 +41,8 @@ def build_parser():
     ap.add_argument("--min-score", type=int, default=0, help="exit 1 if the overall score is below this value")
     ap.add_argument("--exclude", action="append", default=[], help="folder name to exclude (repeatable)")
     ap.add_argument("--lang", choices=["en", "es"], default=default_lang(), help="language of the messages")
+    ap.add_argument("--theme", choices=report.THEMES, default="matrix",
+                    help="look of the HTML report and terminal banner (default: matrix)")
     ap.add_argument("--ai", action="store_true",
                     help="ask Claude for a prioritized plan and concrete fixes (sends findings and nearby code "
                          "to the Anthropic API; needs repocheckup[ai] and ANTHROPIC_API_KEY)")
@@ -68,7 +70,7 @@ def _render(args, findings, checks, files, advice):
         return report.to_json(findings, checks, files, advice)
     if args.format == "sarif":
         return report.to_sarif(findings)
-    out = report.to_text(findings, checks, files, args.lang, color=sys.stdout.isatty() and not args.output)
+    out = report.to_text(findings, checks, files, args.lang, sys.stdout.isatty() and not args.output, args.theme)
     return out + "\n" + report.ai_to_text(advice, args.lang) if advice else out
 
 
@@ -95,7 +97,7 @@ def main(argv=None):
     for w in warnings:
         print(f"repocheckup: warning: {w}", file=sys.stderr)
     advice = _advice(args, findings, checks)
-    html_page = (report.to_html(findings, checks, files, args.lang, ", ".join(args.paths), advice)
+    html_page = (report.to_html(findings, checks, files, args.lang, ", ".join(args.paths), advice, args.theme)
                  if args.html else "")
     _write(args, _render(args, findings, checks, files, advice), html_page)
     _, overall = report.scores(findings, checks)
