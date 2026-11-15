@@ -2,6 +2,6 @@
 <!-- Qué cambia y por qué -->
 
 ## Checklist
-- [ ] El JSON de Threat Dragon es válido
-- [ ] `docs/amenazas.csv` actualizado si cambiaron las amenazas
-- [ ] No incluye datos reales de infraestructura ni credenciales
+- [ ] Cita un estándar o fuente cuando aplica
+- [ ] No incluye datos reales de sistemas ni credenciales
+- [ ] `python3 scripts/check_secrets.py` pasa

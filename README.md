@@ -1,40 +1,38 @@
-# Cómo mejorar la seguridad de una aplicación web
+# Mejores prácticas de seguridad de aplicaciones
 
-Guía práctica de mejora de seguridad con un **modelo de amenazas STRIDE de ejemplo** (OWASP Threat Dragon). Empieza por [`docs/guia-mejora-seguridad.md`](docs/guia-mejora-seguridad.md).
+Guía abierta y práctica para **mejorar la seguridad de una aplicación web**: desde el diseño hasta el despliegue. Pensada para equipos de desarrollo que quieren una referencia concisa, accionable y alineada con estándares ([OWASP ASVS](https://owasp.org/www-project-application-security-verification-standard/), [OWASP Top 10](https://owasp.org/www-project-top-ten/), NIST SSDF, SLSA).
 
-El modelo de amenazas es **de referencia** para una aplicación web administrativa genérica: SPA, API, base de datos relacional, scheduler y pipeline CI/CD. Es un **ejemplo ilustrativo con datos ficticios**; no describe ningún sistema real ni sus configuraciones.
+## Guías
 
-Autor: Edisson Payes. Repositorio: https://github.com/EdissonGT/OWASP-Threat-Dragon-AdminWeb
-
-## Contenido
-
-| Ruta | Descripción |
+| # | Tema |
 |---|---|
-| `docs/guia-mejora-seguridad.md` | Guía de buenas prácticas por área, con prioridades |
-| `threat-models/AdminWeb/AdminWeb.json` | Modelo de Threat Dragon (4 diagramas, 50 amenazas) |
-| `docs/amenazas.csv` | Inventario de las 50 amenazas STRIDE en formato tabular |
-| `scripts/validate_model.py` | Valida los JSON y busca IPs o llaves privadas |
+| [01](docs/01-autenticacion-y-sesiones.md) | Autenticación, contraseñas y sesiones |
+| [02](docs/02-autorizacion.md) | Autorización y control de acceso |
+| [03](docs/03-validacion-y-api.md) | Validación de entrada/salida y seguridad de APIs |
+| [04](docs/04-datos-secretos-y-criptografia.md) | Datos, secretos y criptografía |
+| [05](docs/05-infraestructura-bd-y-logging.md) | Base de datos, infraestructura, logging y disponibilidad |
+| [06](docs/06-cadena-de-suministro-y-cicd.md) | Cadena de suministro y CI/CD |
+| [07](docs/07-ciclo-de-desarrollo-seguro.md) | Ciclo de desarrollo seguro y modelado de amenazas (STRIDE) |
+| [08](docs/08-owasp-top-10.md) | OWASP Top 10 y su mitigación |
 
-## Diagramas
+## Recursos prácticos
 
-- Nivel 0: contexto general.
-- Nivel 1: procesos, almacenes de datos, flujos y límites de confianza.
-- Nivel 2A: autenticación y control de acceso.
-- Nivel 2B: pipeline CI/CD y despliegue.
+- [Checklist de seguridad](checklists/checklist-seguridad-aplicacion.md) para cada release.
+- [Ejemplo Node/Express](examples/node-express/secure-server.js) con helmet, rate limiting, validación y autorización.
+- [Ejemplo Python/Flask](examples/python-flask/secure_app.py) con Argon2id, límites y headers.
+- [Headers de seguridad recomendados](examples/security-headers.md).
 
-Ábrelo con [OWASP Threat Dragon](https://github.com/OWASP/threat-dragon) (Open a Threat Model) para ver los diagramas.
+## Por dónde empezar
 
-## Uso
-
-Sirve como plantilla para aprender a aplicar STRIDE de punta a punta: diagramas de flujo de datos, límites de confianza, amenazas por severidad y mitigaciones generales.
+1. Autenticación y autorización en el **servidor**, y TLS en todo el tráfico.
+2. Gestión de secretos y almacenamiento seguro de contraseñas.
+3. Validación de entrada y control de dependencias.
+4. Logging, monitoreo y pipeline CI/CD seguro.
+5. Mejora continua: modelado de amenazas en cada cambio importante.
 
 ## Contribuir y seguridad
 
-- [CONTRIBUTING.md](CONTRIBUTING.md): cómo colaborar.
-- [SECURITY.md](SECURITY.md): cómo reportar información sensible.
-- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md): código de conducta.
-- `scripts/validate_model.py` y el workflow de GitHub Actions validan el modelo en cada push.
+- [CONTRIBUTING.md](CONTRIBUTING.md) · [SECURITY.md](SECURITY.md) · [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+- `scripts/check_secrets.py` y GitHub Actions revisan que el repo no incluya secretos ni IPs.
 
-## Licencia
-
-MIT. Ver [LICENSE](LICENSE).
+Autor: Edisson Payes · Licencia: [MIT](LICENSE)
