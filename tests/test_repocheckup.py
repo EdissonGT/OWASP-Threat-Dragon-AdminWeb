@@ -147,7 +147,7 @@ class ReportTests(unittest.TestCase):
     def test_html_escapes_content(self):
         text = 'el.innerHTML = "<script>alert(1)</script>"\n'
         found = security.check_file(Path("x.js"), text)
-        page = report.to_html(found, ["security"], 1, "en", "<b>target</b>")
+        page = report.to_html(found, ["security"], 1, "en", target="<b>target</b>")
         self.assertNotIn("<script>alert(1)", page)
         self.assertNotIn("<b>target</b>", page)
         self.assertIn("&lt;script&gt;alert(1)", page)
@@ -173,8 +173,8 @@ ADVICE = {
     "priorities": [{"title": "Fix SQL injection", "why": "Data theft", "steps": ["Use parameters"],
                     "rules": ["INJ001"], "effort": "small"}],
     "fixes": [{"rule": "INJ001", "file": "app.py", "line": 13, "explanation": "Parameterize it",
-               "fixed_code": 'cur.execute("SELECT 1 WHERE a = %s", (a,))', "false_positive": False},
-              {"rule": "CFG005", "file": "x.py", "line": 2, "explanation": "Test URL", "fixed_code": "",
+               "original_code": "", "fixed_code": 'cur.execute("SELECT 1 WHERE a = %s", (a,))', "false_positive": False},
+              {"rule": "CFG005", "file": "x.py", "line": 2, "explanation": "Test URL", "original_code": "", "fixed_code": "",
                "false_positive": True}],
     "quick_wins": ["Add a .gitignore"],
 }
@@ -266,7 +266,7 @@ class AiTests(unittest.TestCase):
         check(ai.SCHEMA)
 
     def test_rendering_escapes_ai_text(self):
-        page = report.to_html(self.findings, self.checks, 1, "en", "t", ADVICE)
+        page = report.to_html(self.findings, self.checks, 1, "en", target="t", advice=ADVICE)
         self.assertIn("AI recommendations", page)
         self.assertIn("Risky &lt;b&gt;repo&lt;/b&gt;.", page)
         self.assertNotIn("Risky <b>repo</b>", page)

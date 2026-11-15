@@ -3,32 +3,44 @@ description: Security, code quality, repository health and dependency checks wit
 author: Edisson Payes
 branding:
   icon: shield
-  color: blue
+  color: green
 inputs:
   path:
     description: File or folder to analyze
     default: "."
   checks:
-    description: "Comma-separated checks: security, quality, health, deps, or all"
-    default: "security,quality,health"
+    description: "Comma-separated checks: security, quality, health, deps, or all. Empty uses the config file or the default."
+    default: ""
   fail-on:
-    description: "Fail if a finding of this severity or higher exists: low, medium, high, critical, never"
-    default: high
+    description: "Fail if a finding of this severity or higher exists: low, medium, high, critical, never. Empty uses the config file or 'high'."
+    default: ""
   min-score:
-    description: Fail if the overall score (0-100) is below this value
-    default: "0"
+    description: Fail if the overall score (0-100) is below this value. Empty uses the config file or 0.
+    default: ""
   exclude:
     description: Space-separated folder names to exclude
     default: ""
   lang:
     description: "Language of the messages: en or es"
     default: en
+  baseline:
+    description: Baseline file whose findings are hidden, so only new ones fail the build
+    default: ""
+  diff-base:
+    description: "Only report findings on lines changed since this git ref (for example origin/main). Needs fetch-depth: 0."
+    default: ""
+  comment:
+    description: "On pull requests, post the summary as a comment (needs 'pull-requests: write')"
+    default: "false"
   sarif-file:
     description: Where to write the SARIF report (upload it with github/codeql-action/upload-sarif)
     default: repocheckup.sarif
   html-file:
     description: Where to write the HTML report
     default: repocheckup-report.html
+  badge-file:
+    description: Where to write the SVG score badge
+    default: repocheckup-badge.svg
 outputs:
   score:
     description: Overall score from 0 to 100
@@ -48,16 +60,13 @@ runs:
         RC_MIN_SCORE: ${{ inputs.min-score }}
         RC_EXCLUDE: ${{ inputs.exclude }}
         RC_LANG: ${{ inputs.lang }}
+        RC_BASELINE: ${{ inputs.baseline }}
+        RC_DIFF: ${{ inputs.diff-base }}
+        RC_COMMENT: ${{ inputs.comment }}
         RC_SARIF: ${{ inputs.sarif-file }}
         RC_HTML: ${{ inputs.html-file }}
+        RC_BADGE: ${{ inputs.badge-file }}
+        RC_PR: ${{ github.event.pull_request.number }}
+        GH_TOKEN: ${{ github.token }}
         PYTHONPATH: ${{ github.action_path }}
-      run: |
-        args=()
-        for d in $RC_EXCLUDE; do args+=(--exclude "$d"); done
-        python3 -m repocheckup "$RC_PATH" --checks "$RC_CHECKS" --lang "$RC_LANG" "${args[@]}" \
-          --format sarif --output "$RC_SARIF" --html "$RC_HTML" --fail-on never
-        score=$(python3 -m repocheckup "$RC_PATH" --checks "$RC_CHECKS" "${args[@]}" --format json --fail-on never \
-          | python3 -c "import json,sys; print(json.load(sys.stdin)['score'])")
-        echo "score=$score" >> "$GITHUB_OUTPUT"
-        python3 -m repocheckup "$RC_PATH" --checks "$RC_CHECKS" --lang "$RC_LANG" "${args[@]}" \
-          --fail-on "$RC_FAIL_ON" --min-score "$RC_MIN_SCORE"
+      run: bash "${{ github.action_path }}/scripts/action.sh"

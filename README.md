@@ -1,6 +1,7 @@
 # repocheckup
 
 [![CI](https://github.com/EdissonGT/repocheckup/actions/workflows/validate.yml/badge.svg)](https://github.com/EdissonGT/repocheckup/actions/workflows/validate.yml)
+[![repocheckup](docs/badge.svg)](docs/USAGE.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 **A health checkup for any code repository.** One command reviews security, code quality, repository health and dependencies, gives the project a score from 0 to 100 and tells you how to fix each finding.
@@ -54,6 +55,15 @@ It is off by default. When on, the findings and a few lines of code around each 
 
 Output as text, JSON, SARIF (GitHub Code Scanning) or a self-contained HTML report with a Matrix look (`--theme classic` for a plain one). Full options and rule list: [docs/USAGE.md](docs/USAGE.md).
 
+## Built to be adopted
+
+- **Baseline**: accept today's findings and fail only on new ones (`--write-baseline`, `--baseline`).
+- **Diff mode**: check only the lines you changed (`--diff origin/main`).
+- **Config file**: turn rules off, change severities and thresholds in `.repocheckup.json`.
+- **Score history and badge**: track the trend (`--history`) and show the score in your README (`--badge`).
+- **Pull request comments**: the GitHub Action posts the score and the top findings.
+- **`--fix`** (experimental): applies the AI's fixes, one reviewed diff at a time.
+
 ## Use it in GitHub Actions
 
 ```yaml
@@ -62,6 +72,7 @@ Output as text, JSON, SARIF (GitHub Code Scanning) or a self-contained HTML repo
   with:
     fail-on: high      # low | medium | high | critical | never
     min-score: "70"    # optional quality gate
+    comment: "true"    # post the summary on the pull request
 ```
 
 ## More than a tool

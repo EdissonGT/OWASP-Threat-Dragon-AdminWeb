@@ -4,10 +4,21 @@ import hashlib
 import re
 from pathlib import Path
 
+from . import quality_js
 from .model import IGNORE_MARKS, Finding, pick
 
 CODE_EXTS = {".py", ".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs", ".java", ".kt", ".go", ".php", ".rb", ".cs"}
-MAX_FUNC_LINES, MAX_COMPLEXITY, MAX_PARAMS, MAX_FILE_LINES, DUP_WINDOW = 80, 15, 7, 1000, 10
+DUP_WINDOW = 10
+JS_EXTS = {".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs"}
+DEFAULT_LIMITS = {"max_function_lines": 80, "max_complexity": 15, "max_params": 7, "max_file_lines": 1000}
+LIMITS = dict(DEFAULT_LIMITS)
+
+
+def set_limits(overrides=None):
+    """Reset the thresholds to the defaults, then apply the given overrides (from the config file)."""
+    LIMITS.clear()
+    LIMITS.update(DEFAULT_LIMITS)
+    LIMITS.update(overrides or {})
 
 T = {
     "QLT001": (("Function too long ({n} lines)", "Función demasiado larga ({n} líneas)"), "medium",
@@ -47,14 +58,14 @@ def _f(rule, path, line, snippet, lang, n=""):
 def _function(node, path, lines, lang):
     out, head = [], lines[node.lineno - 1].strip()
     length = (node.end_lineno or node.lineno) - node.lineno + 1
-    if length > MAX_FUNC_LINES:
+    if length > LIMITS["max_function_lines"]:
         out.append(_f("QLT001", path, node.lineno, head, lang, length))
     complexity = 1 + sum(isinstance(n, BRANCHES) for n in ast.walk(node))
-    if complexity > MAX_COMPLEXITY:
+    if complexity > LIMITS["max_complexity"]:
         out.append(_f("QLT002", path, node.lineno, head, lang, complexity))
     a = node.args
     params = [p for p in a.posonlyargs + a.args + a.kwonlyargs if p.arg not in ("self", "cls")]
-    if len(params) > MAX_PARAMS:
+    if len(params) > LIMITS["max_params"]:
         out.append(_f("QLT003", path, node.lineno, head, lang, len(params)))
     if any(isinstance(d, (ast.List, ast.Dict, ast.Set)) for d in a.defaults + a.kw_defaults if d):
         out.append(_f("QLT009", path, node.lineno, head, lang))
@@ -81,13 +92,28 @@ def _python(path, text, lines, lang):
     return out
 
 
+def _javascript(path, text, lines, lang):
+    out = []
+    for name, line, length, complexity, params in quality_js.functions(text):
+        head = lines[line - 1].strip() if line <= len(lines) else name
+        if length > LIMITS["max_function_lines"]:
+            out.append(_f("QLT001", path, line, head, lang, length))
+        if complexity > LIMITS["max_complexity"]:
+            out.append(_f("QLT002", path, line, head, lang, complexity))
+        if params > LIMITS["max_params"]:
+            out.append(_f("QLT003", path, line, head, lang, params))
+    return out
+
+
 def check_file(path: Path, text: str, lang="en"):
     ext = path.suffix.lower()
     if ext not in CODE_EXTS:
         return []
     lines = text.splitlines()
     out = _python(path, text, lines, lang) if ext == ".py" else []
-    if len(lines) > MAX_FILE_LINES:
+    if ext in JS_EXTS:
+        out += _javascript(path, text, lines, lang)
+    if len(lines) > LIMITS["max_file_lines"]:
         out.append(_f("QLT004", path, 1, lines[0] if lines else "", lang, len(lines)))
     for i, line in enumerate(lines, 1):
         if any(m in line for m in IGNORE_MARKS):

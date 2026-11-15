@@ -76,6 +76,62 @@ Before you turn it on:
 - **Review what it suggests.** It is a model reading snippets, not your whole project; treat its fixes as a proposal.
 - If the API is unreachable or the key is missing, the normal report is still produced.
 
+## Adopting it in an existing project
+
+A first run on an old codebase can report hundreds of findings. Three options make it usable from day one.
+
+**Baseline: fail only on new problems.** Record today's findings once, commit the file, and from then on only findings that are not in it count. Findings are matched by rule, file and the flagged text, so moving code around does not make them "new".
+
+```bash
+repocheckup . --write-baseline .repocheckup-baseline.json    # once
+repocheckup . --baseline .repocheckup-baseline.json          # from then on
+```
+
+**Diff mode: only what you changed.** Reports findings on lines changed since a git reference, plus new files.
+
+```bash
+repocheckup . --diff origin/main
+```
+
+**Configuration file.** A `.repocheckup.json` in the scanned folder (or the current one) sets the defaults; command-line flags win over it.
+
+```json
+{
+  "exclude": ["migrations", "fixtures"],
+  "disable": ["QLT006", "K8S"],
+  "severity": {"CFG005": "medium"},
+  "limits": {"max_function_lines": 120, "max_complexity": 20, "max_params": 8, "max_file_lines": 1500},
+  "checks": ["security", "quality", "health"],
+  "fail_on": "high",
+  "min_score": 70,
+  "lang": "en",
+  "theme": "matrix"
+}
+```
+
+`disable` takes exact rule ids or prefixes (`"QLT"` turns off every quality rule). Use `--no-config` to ignore the file, which is worth doing in CI for pull requests from people you do not trust, since the file can relax the checks.
+
+## Tracking and sharing the score
+
+| Option | What you get |
+|---|---|
+| `--history FILE` | Appends each run to a JSON file. The terminal shows the change since the previous run and the HTML report draws the trend. |
+| `--badge FILE` | An SVG badge such as `repocheckup 92/100 A`, colored by grade. Commit it and link it from your README. |
+| `--markdown FILE` | A Markdown summary with the scores and the top findings, ready for a pull request comment. |
+
+## Applying AI fixes (`--fix`, experimental)
+
+With `--fix` (which turns on `--ai`), each code fix the model proposes is shown as a diff and applied if you accept it.
+
+```bash
+repocheckup . --fix          # asks before each change
+repocheckup . --fix --yes    # applies everything without asking
+```
+
+A fix is applied only when the lines the model says it is replacing are found verbatim in the file, near the reported line. If they are not, the fix is skipped and nothing changes. Only files inside the scanned folder are touched, and likely false positives are never "fixed". Without a terminal and without `--yes`, the diffs are printed and nothing is written.
+
+It has been tested with canned model answers, not yet against live output, so commit your work first, review every diff and run your tests afterwards.
+
 ## Scoring
 
 Each area starts at 100 and loses points per finding: critical 25, high 10, medium 4, low 1. The overall score is the average of the areas that ran. Grades: A ≥ 90, B ≥ 75, C ≥ 60, D ≥ 40, F below.
@@ -85,14 +141,22 @@ Each area starts at 100 and loses points per finding: critical 25, high 10, medi
 GitHub Actions:
 
 ```yaml
-- uses: actions/checkout@v4
-- uses: EdissonGT/repocheckup@main
-  with:
-    fail-on: high
-    min-score: "70"
+permissions:
+  contents: read
+  pull-requests: write        # only needed for comment: "true"
+steps:
+  - uses: actions/checkout@v4
+    with: { fetch-depth: 0 }  # only needed for diff-base
+  - uses: EdissonGT/repocheckup@main
+    with:
+      fail-on: high
+      min-score: "70"
+      comment: "true"                         # post the summary on the pull request
+      baseline: .repocheckup-baseline.json    # optional
+      diff-base: origin/main                  # optional
 ```
 
-The action writes `repocheckup.sarif` and `repocheckup-report.html` and exposes a `score` output. Ready-to-copy files live in [`templates/`](../templates): a full security workflow (CodeQL, gitleaks, dependency review, Trivy, repocheckup), Dependabot and pre-commit.
+The action writes the summary to the job page, updates one comment on the pull request when `comment` is on, writes `repocheckup.sarif`, `repocheckup-report.html` and `repocheckup-badge.svg`, and exposes a `score` output. Ready-to-copy files live in [`templates/`](../templates): a full security workflow (CodeQL, gitleaks, dependency review, Trivy, repocheckup), Dependabot and pre-commit.
 
 ## Rules
 
@@ -115,7 +179,7 @@ The action writes `repocheckup.sarif` and `repocheckup-report.html` and exposes 
 | HLT001–013 | Health | Missing README, license, tests, CI, `.gitignore`, lockfile, security policy, contributing guide; unpinned dependencies; committed `.env`; large files |
 | DEP001 | Dependencies | Pinned package with known vulnerabilities (PyPI `requirements*.txt`, npm `package-lock.json`) |
 
-Function-level quality metrics (QLT001–003, 008, 009) are Python-only; the other quality rules work across languages. Security rules cover Python, JavaScript/TypeScript, Java/Kotlin, Go, PHP, Ruby and C# to different depths.
+Function-level metrics (QLT001–003) cover Python, exactly, and JavaScript/TypeScript, approximately (by matching braces, without a parser). QLT008–009 are Python-only; the other quality rules work across languages. Security rules cover Python, JavaScript/TypeScript, Java/Kotlin, Go, PHP, Ruby and C# to different depths.
 
 ## Limits
 

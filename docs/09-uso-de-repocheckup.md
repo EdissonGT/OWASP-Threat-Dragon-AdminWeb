@@ -76,6 +76,60 @@ Antes de activarla:
 - **Revisa lo que sugiere.** Es un modelo leyendo fragmentos, no tu proyecto completo; toma sus correcciones como una propuesta.
 - Si la API no responde o falta la key, el informe normal se genera igual.
 
+## Adoptarlo en un proyecto existente
+
+La primera ejecución sobre un proyecto antiguo puede dar cientos de hallazgos. Tres opciones lo hacen usable desde el primer día.
+
+**Línea base: fallar solo por problemas nuevos.** Registra una vez los hallazgos de hoy, versiona el archivo, y desde ahí solo cuentan los que no estén en él. Los hallazgos se comparan por regla, archivo y texto señalado, así que mover código no los vuelve "nuevos".
+
+```bash
+repocheckup . --write-baseline .repocheckup-baseline.json    # una vez
+repocheckup . --baseline .repocheckup-baseline.json          # de ahí en adelante
+```
+
+**Modo diff: solo lo que cambiaste.** Reporta los hallazgos en las líneas cambiadas desde una referencia de git, más los archivos nuevos.
+
+```bash
+repocheckup . --diff origin/main
+```
+
+**Archivo de configuración.** Un `.repocheckup.json` en la carpeta analizada (o en la actual) define los valores por defecto; las opciones de la línea de comandos tienen prioridad.
+
+```json
+{
+  "exclude": ["migrations", "fixtures"],
+  "disable": ["QLT006", "K8S"],
+  "severity": {"CFG005": "medium"},
+  "limits": {"max_function_lines": 120, "max_complexity": 20, "max_params": 8, "max_file_lines": 1500},
+  "fail_on": "high",
+  "min_score": 70,
+  "lang": "es"
+}
+```
+
+`disable` acepta ids exactos o prefijos (`"QLT"` apaga todas las reglas de calidad). Con `--no-config` se ignora el archivo; conviene en CI para Pull Requests de personas en las que no confías, porque el archivo puede relajar las revisiones.
+
+## Seguir y compartir el puntaje
+
+| Opción | Qué obtienes |
+|---|---|
+| `--history ARCHIVO` | Agrega cada ejecución a un archivo JSON. La terminal muestra el cambio respecto a la anterior y el informe HTML dibuja la tendencia. |
+| `--badge ARCHIVO` | Un badge SVG como `repocheckup 92/100 A`, con color según la nota. Versiónalo y enlázalo desde tu README. |
+| `--markdown ARCHIVO` | Un resumen en Markdown con los puntajes y los hallazgos principales, listo para comentar en un Pull Request. |
+
+## Aplicar las correcciones de la IA (`--fix`, experimental)
+
+Con `--fix` (que activa `--ai`), cada corrección de código que propone el modelo se muestra como un diff y se aplica si la aceptas.
+
+```bash
+repocheckup . --fix          # pregunta antes de cada cambio
+repocheckup . --fix --yes    # aplica todo sin preguntar
+```
+
+Una corrección solo se aplica si las líneas que el modelo dice reemplazar aparecen tal cual en el archivo, cerca de la línea reportada. Si no, se omite y nada cambia. Solo se tocan archivos dentro de la carpeta analizada, y los probables falsos positivos nunca se "corrigen". Sin terminal y sin `--yes`, los diffs se muestran y no se escribe nada.
+
+Se ha probado con respuestas simuladas del modelo, todavía no con respuestas reales: haz commit antes, revisa cada diff y ejecuta tus pruebas después.
+
 ## Puntaje
 
 Cada área empieza en 100 y pierde puntos por hallazgo: crítico 25, alto 10, medio 4, bajo 1. El puntaje general es el promedio de las áreas ejecutadas. Notas: A ≥ 90, B ≥ 75, C ≥ 60, D ≥ 40, F por debajo.
@@ -83,15 +137,25 @@ Cada área empieza en 100 y pierde puntos por hallazgo: crítico 25, alto 10, me
 ## Usarlo en CI
 
 ```yaml
-- uses: actions/checkout@v4
-- uses: EdissonGT/repocheckup@main
-  with:
-    fail-on: high
-    min-score: "70"
-    lang: es
+permissions:
+  contents: read
+  pull-requests: write        # solo para comment: "true"
+steps:
+  - uses: actions/checkout@v4
+    with: { fetch-depth: 0 }  # solo para diff-base
+  - uses: EdissonGT/repocheckup@main
+    with:
+      fail-on: high
+      min-score: "70"
+      lang: es
+      comment: "true"                         # publica el resumen en el Pull Request
+      baseline: .repocheckup-baseline.json    # opcional
+      diff-base: origin/main                  # opcional
 ```
 
-En [`templates/`](../templates) hay archivos listos para copiar: workflow de seguridad completo, Dependabot y pre-commit.
+La acción escribe el resumen en la página del job, mantiene un único comentario en el Pull Request cuando `comment` está activo, genera `repocheckup.sarif`, `repocheckup-report.html` y `repocheckup-badge.svg`, y expone la salida `score`. En [`templates/`](../templates) hay archivos listos para copiar: workflow de seguridad completo, Dependabot y pre-commit.
+
+Las métricas por función (longitud, complejidad, parámetros) cubren Python de forma exacta y JavaScript/TypeScript de forma aproximada.
 
 ## Cómo corregir los hallazgos
 

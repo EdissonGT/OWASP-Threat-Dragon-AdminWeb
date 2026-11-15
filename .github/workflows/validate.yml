@@ -19,9 +19,39 @@ jobs:
       - run: python3 -m unittest discover -s tests -v
       - run: python3 scripts/check_secrets.py
       - name: Analyze this repository (practice samples excluded)
-        run: python3 -m repocheckup . --exclude samples --fail-on medium --html report.html
+        run: python3 -m repocheckup . --exclude samples --fail-on medium --html report.html --badge docs/badge.svg
+      - name: The committed badge matches the current score
+        run: git diff --exit-code docs/badge.svg
       - uses: actions/upload-artifact@v4
         if: matrix.python-version == '3.13'
         with:
           name: repocheckup-report
           path: report.html
+
+  action:
+    name: GitHub Action (dogfood)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - id: checkup
+        uses: ./
+        with:
+          exclude: samples
+          fail-on: medium
+          min-score: "90"
+          comment: "true"
+      - name: The action reported a score
+        env:
+          SCORE: ${{ steps.checkup.outputs.score }}
+        run: test "$SCORE" -ge 90
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: action-report
+          path: |
+            repocheckup-report.html
+            repocheckup-badge.svg
+            repocheckup.sarif

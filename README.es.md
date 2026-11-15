@@ -51,6 +51,15 @@ Está apagada por defecto. Al activarla, los hallazgos y unas líneas de código
 
 Salida en texto, JSON, SARIF (GitHub Code Scanning) o un informe HTML autónomo con estilo Matrix (`--theme classic` para uno sencillo). Opciones completas en la [guía de uso](docs/09-uso-de-repocheckup.md).
 
+## Pensado para adoptarse
+
+- **Línea base**: acepta los hallazgos de hoy y falla solo por los nuevos (`--write-baseline`, `--baseline`).
+- **Modo diff**: revisa solo las líneas que cambiaste (`--diff origin/main`).
+- **Archivo de configuración**: apaga reglas y cambia severidades y umbrales en `.repocheckup.json`.
+- **Historial y badge**: sigue la tendencia (`--history`) y muestra el puntaje en tu README (`--badge`).
+- **Comentarios en Pull Requests**: la GitHub Action publica el puntaje y los hallazgos principales.
+- **`--fix`** (experimental): aplica las correcciones de la IA, un diff revisado a la vez.
+
 ## Usarlo en GitHub Actions
 
 ```yaml
@@ -60,6 +69,7 @@ Salida en texto, JSON, SARIF (GitHub Code Scanning) o un informe HTML autónomo 
     fail-on: high
     min-score: "70"
     lang: es
+    comment: "true"
 ```
 
 ## Guías para corregir lo que encuentra

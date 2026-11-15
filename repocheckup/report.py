@@ -62,6 +62,16 @@ def to_text(findings, checks, files, lang, color=False, theme="matrix"):
     return "\n".join(out)
 
 
+def trend_text(history, lang):
+    """One line comparing this run with the previous one."""
+    change = history[-1]["score"] - history[-2]["score"]
+    words = {"en": ("Trend", "no change since the previous run", "since the previous run", "runs recorded"),
+             "es": ("Tendencia", "sin cambio desde la ejecución anterior", "desde la ejecución anterior",
+                    "ejecuciones registradas")}[lang]
+    detail = words[1] if not change else f"{change:+d} {words[2]}"
+    return f"{words[0]}: {detail} ({len(history)} {words[3]})"
+
+
 def ai_to_text(advice, lang):
     L, out = LABELS[lang], [f"\n=== {LABELS[lang]['ai']} ===", advice["summary"], f"\n{LABELS[lang]['priorities']}:"]
     for i, p in enumerate(advice["priorities"], 1):
@@ -119,7 +129,7 @@ main{max-width:1100px;margin:0 auto;padding:24px 16px}h1{margin:0 0 4px;font-siz
 .muted{color:var(--muted)}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:20px 0}
 .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px}
 .card b{display:block;font-size:30px}.card.main{border-color:var(--accent)}
-.bar{height:6px;border-radius:3px;background:var(--line);margin-top:8px;overflow:hidden}.bar i{display:block;height:100%;background:var(--accent)}
+.spark{display:block;margin-top:10px;color:var(--accent);max-width:100%}.bar{height:6px;border-radius:3px;background:var(--line);margin-top:8px;overflow:hidden}.bar i{display:block;height:100%;background:var(--accent)}
 .filters{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
 button{font:inherit;padding:6px 12px;border-radius:16px;border:1px solid var(--line);background:var(--card);color:var(--text);cursor:pointer}
 button.on{background:var(--accent);border-color:var(--accent);color:#fff}
@@ -186,11 +196,30 @@ def ai_to_html(advice, lang):
     return "".join(parts) + "</div>"
 
 
-def to_html(findings, checks, files, lang, target="", advice=None, theme="matrix"):
+def sparkline(history, width=260, height=44):
+    """Inline SVG line of the overall score across runs (needs at least two runs)."""
+    points = [h["score"] for h in (history or [])][-40:]
+    if len(points) < 2:
+        return ""
+    step = (width - 8) / (len(points) - 1)
+    low, high = max(0, min(points) - 5), min(100, max(points) + 5)   # zoom on the range that was actually used
+    span = (high - low) or 1
+    coords = " ".join(f"{4 + i * step:.1f},{height - 4 - (height - 8) * (p - low) / span:.1f}"
+                      for i, p in enumerate(points))
+    last_x, last_y = coords.split(" ")[-1].split(",")
+    return (f'<svg class="spark" viewBox="0 0 {width} {height}" width="{width}" height="{height}" role="img" '
+            f'aria-label="score history"><polyline points="{coords}" fill="none" stroke="currentColor" '
+            f'stroke-width="2"/><circle cx="{last_x}" cy="{last_y}" r="3" fill="currentColor"/></svg>')
+
+
+def to_html(findings, checks, files, lang, **options):
+    """options: target (label of what was scanned), advice (AI result), theme, history (list of past runs)."""
+    target, advice = options.get("target", ""), options.get("advice")
+    theme, history = options.get("theme", "matrix"), options.get("history")
     L, e = LABELS[lang], html.escape
     per, overall = scores(findings, checks)
     cards = [f'<div class="card main"><span class="muted">{e(L["overall"])}</span><b>{overall} · {grade(overall)}</b>'
-             f'<div class="bar"><i style="width:{overall}%"></i></div></div>']
+             f'<div class="bar"><i style="width:{overall}%"></i></div>{sparkline(history)}</div>']
     for c in checks:
         n = sum(1 for f in findings if f.category == c)
         cards.append(f'<div class="card"><span class="muted">{e(L[c])}</span><b>{per[c]} · {grade(per[c])}</b>'
