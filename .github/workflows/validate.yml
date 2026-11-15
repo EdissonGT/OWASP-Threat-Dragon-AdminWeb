@@ -12,8 +12,8 @@ jobs:
           - { os: ubuntu-22.04, python-version: "3.8" }   # oldest supported version
           - { os: ubuntu-latest, python-version: "3.13" }
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
       - run: python3 -m unittest discover -s tests -v
@@ -22,7 +22,7 @@ jobs:
         run: python3 -m repocheckup . --exclude samples --fail-on medium --html report.html --badge docs/badge.svg
       - name: The committed badge matches the current score
         run: git diff --exit-code docs/badge.svg
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: matrix.python-version == '3.13'
         with:
           name: repocheckup-report
@@ -35,7 +35,7 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - id: checkup
         uses: ./
         with:
@@ -47,7 +47,7 @@ jobs:
         env:
           SCORE: ${{ steps.checkup.outputs.score }}
         run: test "$SCORE" -ge 90
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: action-report

@@ -12,14 +12,14 @@ jobs:
   codeql:                       # SAST
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: github/codeql-action/init@v3
         with: { languages: javascript-typescript, python }   # ajusta a tus lenguajes
       - uses: github/codeql-action/analyze@v3
   secrets:                      # escaneo de secretos
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with: { fetch-depth: 0 }
       - uses: gitleaks/gitleaks-action@v2
         env: { GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
@@ -27,12 +27,12 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/dependency-review-action@v4
   repocheckup:                  # security + code quality + repository health, with score
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: EdissonGT/repocheckup@main
         with:
           comment: "true"        # needs 'pull-requests: write' on the job
@@ -41,12 +41,12 @@ jobs:
       - uses: github/codeql-action/upload-sarif@v3
         if: always()
         with: { sarif_file: repocheckup.sarif }
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with: { name: repocheckup-report, path: repocheckup-report.html }
   container:                    # imágenes (si usas Docker)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: aquasecurity/trivy-action@0.24.0
         with: { scan-type: fs, severity: "HIGH,CRITICAL", exit-code: "1" }
