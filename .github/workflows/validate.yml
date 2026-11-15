@@ -12,7 +12,7 @@ jobs:
           - { os: ubuntu-22.04, python-version: "3.8" }   # oldest supported version
           - { os: ubuntu-latest, python-version: "3.13" }
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
@@ -35,7 +35,7 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - id: checkup
         uses: ./
         with:
