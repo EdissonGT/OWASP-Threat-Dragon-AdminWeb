@@ -4,10 +4,13 @@ permissions:
   contents: read
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ["3.8", "3.12"]
+        include:
+          - { os: ubuntu-22.04, python-version: "3.8" }   # oldest supported version
+          - { os: ubuntu-latest, python-version: "3.13" }
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -18,7 +21,7 @@ jobs:
       - name: Analyze this repository (practice samples excluded)
         run: python3 -m repocheckup . --exclude samples --fail-on medium --html report.html
       - uses: actions/upload-artifact@v4
-        if: matrix.python-version == '3.12'
+        if: matrix.python-version == '3.13'
         with:
           name: repocheckup-report
           path: report.html
